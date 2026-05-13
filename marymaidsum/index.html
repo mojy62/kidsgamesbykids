@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Marymaid's Ocean Math Adventure</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Bowlby+One&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; overflow: hidden; font-family: 'Fredoka', sans-serif; user-select: none; }
+  body {
+    background: #001a33;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .game {
+    width: 100%; max-width: 480px; height: 100vh; max-height: 900px;
+    position: relative; overflow: hidden;
+    background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 25%, #0288D1 55%, #01579B 85%, #002B5C 100%);
+    box-shadow: 0 0 60px rgba(0,0,0,0.5);
+  }
+
+  /* Light rays (very slow scroll) */
+  .light-rays {
+    position: absolute; top: 0; left: -50%; right: -50%; height: 60%;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.15) 0%, transparent 100%),
+      repeating-linear-gradient(105deg, transparent 0px, transparent 60px, rgba(255,255,255,0.06) 61px, rgba(255,255,255,0.06) 110px);
+    pointer-events: none;
+    will-change: transform;
+  }
+
+  /* Parallax scrolling layers */
+  .scroll-layer {
+    position: absolute; top: 0; left: 0;
+    width: 200%; height: 100%;
+    pointer-events: none;
+    will-change: transform;
+  }
+
+  .bubble-far {
+    position: absolute;
+    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.4), rgba(255,255,255,0.05));
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.2);
+    animation: bobVert 4s ease-in-out infinite;
+  }
+  .seaweed {
+    position: absolute; bottom: 0;
+    width: 30px; height: 120px;
+    background: linear-gradient(180deg, #2E7D32, #1B5E20);
+    border-radius: 50% 50% 0 0 / 30% 30% 0 0;
+    transform-origin: bottom center;
+    animation: sway 4s ease-in-out infinite;
+    opacity: 0.85;
+  }
+  @keyframes sway { 0%,100% { transform: rotate(-8deg); } 50% { transform: rotate(8deg); } }
+  .rock {
+    position: absolute; bottom: 0;
+    background: radial-gradient(ellipse at 30% 30%, #6D4C41, #3E2723);
+    border: 2px solid #1A0A05;
+    border-radius: 50% 50% 20% 20% / 70% 70% 30% 30%;
+  }
+  .coral {
+    position: absolute; bottom: 0;
+    width: 40px; height: 60px;
+    opacity: 0.9;
+  }
+  .bubble-near {
+    position: absolute;
+    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8), rgba(255,255,255,0.2));
+    border-radius: 50%;
+    border: 1.5px solid rgba(255,255,255,0.6);
+    animation: bobVert 2.5s ease-in-out infinite;
+  }
+  @keyframes bobVert {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-15px); }
+  }
+
+  /* HUD */
+  .hud {
+    position: absolute; top: 16px; left: 16px; right: 16px;
+    display: flex; justify-content: space-between; align-items: center;
+    z-index: 10; pointer-events: none;
+  }
+  .pearls, .level-badge {
+    background: rgba(255,255,255,0.95);
+    border: 3px solid #013A63;
+    border-radius: 999px;
+    padding: 6px 16px;
+    font-family: 'Bowlby One', cursive;
+    color: #013A63; font-size: 18px;
+    box-shadow: 0 3px 0 #013A63;
+  }
+
+  .progress-track {
+    position: absolute; top: 60px; left: 16px; right: 90px;
+    height: 14px; background: rgba(255,255,255,0.3);
+    border: 3px solid #013A63; border-radius: 999px;
+    overflow: hidden; z-index: 10;
+  }
+  .progress-fill {
+    height: 100%; width: 0%;
+    background: linear-gradient(90deg, #FFD93D, #FF8C42, #FF4081);
+    transition: width 0.6s cubic-bezier(.4,1.6,.6,1);
+    border-radius: 999px;
+  }
+
+  .distance-track {
+    position: absolute; top: 80px; left: 16px; right: 90px;
+    height: 22px; z-index: 10;
+    background: rgba(0,30,60,0.4);
+    border: 2px solid #013A63; border-radius: 999px;
+    display: flex; align-items: center; padding: 0 4px;
+    overflow: hidden;
+  }
+  .shark-marker, .maid-marker {
+    position: absolute; top: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 14px;
+    transition: left 0.4s ease-out;
+    line-height: 1;
+  }
+  .shark-marker { left: 4%; }
+  .maid-marker { left: 90%; }
+
+  /* Timer ring */
+  .timer-wrap {
+    position: absolute; top: 56px; right: 16px;
+    width: 60px; height: 60px;
+    z-index: 11;
+  }
+  .timer-ring {
+    width: 100%; height: 100%;
+    transform: rotate(-90deg);
+  }
+  .timer-ring-bg {
+    fill: rgba(255,255,255,0.9);
+    stroke: #013A63; stroke-width: 3;
+  }
+  .timer-ring-fg {
+    fill: none;
+    stroke: #4CAF50;
+    stroke-width: 6;
+    stroke-linecap: round;
+    transition: stroke 0.3s;
+  }
+  .timer-ring-fg.warn { stroke: #FF9800; }
+  .timer-ring-fg.danger { stroke: #F44336; animation: dangerPulse 0.5s infinite alternate; }
+  @keyframes dangerPulse { from { stroke-width: 6; } to { stroke-width: 9; } }
+  .timer-text {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Bowlby One', cursive;
+    font-size: 22px; color: #013A63;
+  }
+  .timer-text.danger { color: #F44336; animation: timerShake 0.3s infinite; }
+  @keyframes timerShake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-2px); }
+    75% { transform: translateX(2px); }
+  }
+
+  /* Marymaid (fixed position on screen) */
+  .marymaid {
+    position: absolute;
+    width: 90px; height: 110px;
+    left: 60%;
+    top: 32%;
+    z-index: 5;
+    animation: swimBob 2s ease-in-out infinite;
+  }
+  @keyframes swimBob {
+    0%,100% { transform: translateY(-50%) rotate(-3deg); }
+    50% { transform: translateY(calc(-50% - 8px)) rotate(3deg); }
+  }
+  .marymaid.boost { animation: boost 0.8s ease-out; }
+  @keyframes boost {
+    0% { transform: translateY(-50%) scale(1); filter: drop-shadow(0 0 0 transparent); }
+    30% { transform: translateY(-50%) scale(1.15) translateX(15px); filter: drop-shadow(0 0 20px rgba(255,217,61,0.9)); }
+    100% { transform: translateY(-50%) scale(1); filter: drop-shadow(0 0 0 transparent); }
+  }
+  .marymaid.celebrate { animation: celebrate 1s ease-out; }
+  @keyframes celebrate {
+    0% { transform: translateY(-50%) rotate(0); }
+    25% { transform: translateY(-50%) rotate(360deg) scale(1.2); }
+    50% { transform: translateY(-50%) rotate(720deg) scale(1.2); }
+    100% { transform: translateY(-50%) rotate(720deg) scale(1); }
+  }
+  .marymaid.caught { animation: caught 1s ease-in forwards; }
+  @keyframes caught {
+    0% { transform: translateY(-50%) scale(1); opacity: 1; }
+    50% { transform: translateY(-50%) scale(1.3) rotate(180deg); opacity: 0.8; }
+    100% { transform: translateY(-50%) scale(0) rotate(360deg); opacity: 0; }
+  }
+
+  .tail-wave {
+    transform-origin: 50% 30%;
+    animation: tailFlick 0.6s ease-in-out infinite;
+  }
+  @keyframes tailFlick {
+    0%,100% { transform: rotate(-8deg); }
+    50% { transform: rotate(8deg); }
+  }
+
+  /* Chasing shark */
+  .chase-shark {
+    position: absolute;
+    width: 150px; height: 80px;
+    top: 32%;
+    transform: translateY(-50%);
+    z-index: 6;
+    transition: left 0.4s ease-out;
+    filter: drop-shadow(0 6px 12px rgba(0,0,0,0.4));
+  }
+  .chase-shark.lunge { animation: lunge 0.5s ease-in; }
+  @keyframes lunge {
+    0% { transform: translateY(-50%) scale(1); }
+    50% { transform: translateY(-50%) scale(1.2); }
+    100% { transform: translateY(-50%) scale(1); }
+  }
+  .shark-body {
+    animation: sharkSwim 0.4s ease-in-out infinite;
+    transform-origin: 30% 50%;
+  }
+  @keyframes sharkSwim {
+    0%,100% { transform: rotate(-2deg); }
+    50% { transform: rotate(2deg); }
+  }
+  .shark-tail-fin { animation: sharkTail 0.3s ease-in-out infinite; transform-origin: 0% 50%; }
+  @keyframes sharkTail {
+    0%,100% { transform: rotate(-15deg); }
+    50% { transform: rotate(15deg); }
+  }
+
+  /* Question panel */
+  .question-panel {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: linear-gradient(180deg, rgba(255,248,236,0.98), rgba(255,241,214,0.98));
+    border-top: 4px solid #013A63;
+    border-radius: 28px 28px 0 0;
+    padding: 14px 18px 22px;
+    z-index: 20;
+    box-shadow: 0 -8px 30px rgba(0,0,0,0.3);
+    transform: translateY(0);
+    transition: transform 0.5s cubic-bezier(.4,1.6,.6,1);
+    max-height: 48%;
+  }
+  .question-panel.hidden { transform: translateY(110%); }
+
+  .equation {
+    font-family: 'Bowlby One', cursive;
+    font-size: 36px; color: #013A63;
+    text-align: center;
+    display: flex; justify-content: center; align-items: center; gap: 10px;
+    margin-bottom: 10px;
+  }
+  .qmark {
+    background: #FF4081; color: white;
+    min-width: 48px; height: 48px; padding: 0 10px;
+    border-radius: 12px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 3px solid #013A63;
+    animation: pulse 1.2s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+
+  .hint {
+    text-align: center; color: #013A63; font-size: 13px;
+    margin-bottom: 10px; font-weight: 600;
+  }
+
+  .answers-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  }
+  .answer-btn {
+    background: white;
+    border: 4px solid #013A63;
+    border-radius: 18px;
+    font-family: 'Bowlby One', cursive;
+    font-size: 28px; color: #013A63;
+    padding: 10px 0; cursor: pointer;
+    box-shadow: 0 5px 0 #013A63;
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .answer-btn:nth-child(1) { background: #FFD6A5; }
+  .answer-btn:nth-child(2) { background: #C5E99B; }
+  .answer-btn:nth-child(3) { background: #A0E7E5; }
+  .answer-btn:nth-child(4) { background: #FFB7C5; }
+  .answer-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 #013A63; }
+  .answer-btn.correct { background: #7CDB5A !important; animation: correctPulse 0.5s; }
+  .answer-btn.wrong { animation: shakeBtn 0.4s; }
+  @keyframes correctPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+  @keyframes shakeBtn { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+
+  .feedback {
+    position: absolute; top: 22%; left: 50%; transform: translateX(-50%);
+    font-family: 'Bowlby One', cursive; font-size: 52px;
+    color: #FFD93D; text-shadow: 4px 4px 0 #013A63, 0 0 30px rgba(255,217,61,0.8);
+    opacity: 0; pointer-events: none; z-index: 30;
+  }
+  .feedback.show { animation: feedbackPop 1.4s ease-out; }
+  @keyframes feedbackPop {
+    0% { opacity: 0; transform: translate(-50%, 30px) scale(0.5); }
+    25% { opacity: 1; transform: translate(-50%, 0) scale(1.3); }
+    75% { opacity: 1; transform: translate(-50%, -10px) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -50px) scale(0.9); }
+  }
+
+  .sparkle {
+    position: absolute; width: 12px; height: 12px;
+    background: #FFD93D; border-radius: 50%;
+    box-shadow: 0 0 10px #FFD93D;
+    pointer-events: none; z-index: 25;
+  }
+
+  .speed-line {
+    position: absolute;
+    height: 2px; background: rgba(255,255,255,0.6);
+    border-radius: 999px;
+    pointer-events: none; z-index: 4;
+    animation: speedLine 0.5s linear forwards;
+  }
+  @keyframes speedLine {
+    0% { transform: translateX(0); opacity: 0.8; }
+    100% { transform: translateX(-300px); opacity: 0; }
+  }
+
+  .winscreen, .gameover {
+    position: absolute; inset: 0;
+    display: none; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 30px; z-index: 50;
+  }
+  .winscreen.show, .gameover.show { display: flex; animation: fadeIn 0.5s; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .winscreen {
+    background: linear-gradient(180deg, rgba(255,217,61,0.95), rgba(255,140,66,0.95));
+  }
+  .gameover {
+    background: linear-gradient(180deg, rgba(20,0,40,0.95), rgba(80,0,20,0.95));
+  }
+  .winscreen h1 {
+    font-family: 'Bowlby One', cursive; font-size: 38px;
+    color: #013A63; margin-bottom: 14px;
+    text-shadow: 3px 3px 0 white;
+  }
+  .gameover h1 {
+    font-family: 'Bowlby One', cursive; font-size: 38px;
+    color: #FFD93D; margin-bottom: 14px;
+    text-shadow: 3px 3px 0 #B71C1C;
+  }
+  .winscreen p { font-size: 20px; color: #013A63; margin-bottom: 24px; font-weight: 600; }
+  .gameover p { font-size: 18px; color: white; margin-bottom: 24px; font-weight: 600; }
+  .play-again {
+    background: #013A63; color: white;
+    border: 4px solid white;
+    border-radius: 20px; padding: 14px 32px;
+    font-family: 'Bowlby One', cursive; font-size: 22px;
+    cursor: pointer; box-shadow: 0 6px 0 rgba(0,0,0,0.3);
+  }
+  .gameover .play-again { background: #F44336; }
+  .play-again:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(0,0,0,0.3); }
+
+  .treasure {
+    position: absolute; right: -150px; top: 32%; transform: translateY(-50%);
+    width: 100px; height: 80px;
+    transition: right 2s ease-out;
+    z-index: 4;
+  }
+  .treasure.show { right: 20%; animation: treasureGlow 1.5s ease-in-out infinite alternate; }
+  @keyframes treasureGlow {
+    from { filter: drop-shadow(0 0 10px rgba(255,217,61,0.5)); }
+    to { filter: drop-shadow(0 0 25px rgba(255,217,61,1)); }
+  }
+
+  .difficulty-pick {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, #29B6F6, #01579B);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 100; padding: 24px;
+  }
+  .difficulty-pick.hidden { display: none; }
+  .difficulty-pick h1 {
+    font-family: 'Bowlby One', cursive; font-size: 34px;
+    color: white; text-align: center; margin-bottom: 8px;
+    text-shadow: 3px 3px 0 #013A63;
+  }
+  .difficulty-pick .subtitle { color: white; font-size: 16px; margin-bottom: 28px; font-weight: 600; text-align: center; }
+  .diff-btn {
+    width: 100%; max-width: 280px;
+    background: white; border: 4px solid #013A63;
+    border-radius: 22px; padding: 18px;
+    font-family: 'Bowlby One', cursive; font-size: 22px;
+    color: #013A63; margin-bottom: 14px;
+    cursor: pointer; box-shadow: 0 6px 0 #013A63;
+  }
+  .diff-btn small { display: block; font-family: 'Fredoka', sans-serif; font-size: 14px; font-weight: 600; margin-top: 4px; }
+  .diff-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #013A63; }
+  .diff-btn.easy { background: #C5E99B; }
+  .diff-btn.medium { background: #FFD6A5; }
+  .diff-btn.hard { background: #FFB7C5; }
+</style>
+</head>
+<body>
+
+<div class="game" id="game">
+
+  <div class="difficulty-pick" id="difficultyPick">
+    <h1>🧜‍♀️ Marymaid's<br/>Ocean Adventure</h1>
+    <p class="subtitle">Swim away from the shark!<br/>Solve math to escape!</p>
+    <button class="diff-btn easy" onclick="startGame('easy')">
+      🌊 Splash Pool
+      <small>Sums up to 10</small>
+    </button>
+    <button class="diff-btn medium" onclick="startGame('medium')">
+      🐠 Coral Reef
+      <small>Sums up to 20</small>
+    </button>
+    <button class="diff-btn hard" onclick="startGame('hard')">
+      🐙 Deep Sea
+      <small>Two-digit sums!</small>
+    </button>
+  </div>
+
+  <div class="light-rays" id="lightRays"></div>
+  <div class="scroll-layer" id="farLayer"></div>
+  <div class="scroll-layer" id="midLayer"></div>
+  <div class="scroll-layer" id="nearLayer"></div>
+
+  <div class="hud">
+    <div class="level-badge">🌊 <span id="levelNum">1</span>/8</div>
+    <div class="pearls">🦪 <span id="score">0</span></div>
+  </div>
+  <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+  <div class="distance-track">
+    <div class="shark-marker" id="sharkMarker">🦈</div>
+    <div class="maid-marker">🧜‍♀️</div>
+  </div>
+
+  <div class="timer-wrap">
+    <svg class="timer-ring" viewBox="0 0 60 60">
+      <circle class="timer-ring-bg" cx="30" cy="30" r="26"/>
+      <circle class="timer-ring-fg" id="timerRing" cx="30" cy="30" r="26"
+              stroke-dasharray="163.36" stroke-dashoffset="0"/>
+    </svg>
+    <div class="timer-text" id="timerText">20</div>
+  </div>
+
+  <svg class="treasure" id="treasure" viewBox="0 0 100 80">
+    <rect x="10" y="35" width="80" height="40" fill="#8D5524" stroke="#3E2723" stroke-width="3" rx="3"/>
+    <path d="M 10 35 Q 10 15 50 15 Q 90 15 90 35 Z" fill="#A0522D" stroke="#3E2723" stroke-width="3"/>
+    <rect x="8" y="50" width="84" height="4" fill="#FFD93D" stroke="#3E2723" stroke-width="1.5"/>
+    <rect x="46" y="13" width="8" height="40" fill="#FFD93D" stroke="#3E2723" stroke-width="1.5"/>
+    <rect x="44" y="45" width="12" height="14" fill="#FFD93D" stroke="#3E2723" stroke-width="2" rx="2"/>
+    <circle cx="50" cy="51" r="2" fill="#3E2723"/>
+    <circle cx="25" cy="30" r="4" fill="#FFD93D" stroke="#3E2723" stroke-width="1.5"/>
+    <circle cx="75" cy="30" r="4" fill="#FFD93D" stroke="#3E2723" stroke-width="1.5"/>
+    <circle cx="50" cy="22" r="5" fill="#FFD93D" stroke="#3E2723" stroke-width="1.5"/>
+  </svg>
+
+  <svg class="chase-shark" id="chaseShark" viewBox="-20 0 150 80" style="left: -150px;">
+    <g class="shark-body">
+      <g class="shark-tail-fin">
+        <path d="M 0 40 Q -12 25 -18 8 Q -8 18 0 32 Q -8 48 -18 72 Q -12 55 0 40 Z"
+              fill="#455A64" stroke="#1A2327" stroke-width="2.5" stroke-linejoin="round"/>
+      </g>
+      <path d="M 0 40 Q 5 22 35 18 Q 75 14 105 30 Q 115 35 120 40 Q 115 45 105 50 Q 75 66 35 62 Q 5 58 0 40 Z"
+            fill="#546E7A" stroke="#1A2327" stroke-width="2.5"/>
+      <path d="M 30 50 Q 60 60 100 48 Q 70 56 30 50 Z" fill="#B0BEC5" opacity="0.7"/>
+      <path d="M 50 18 L 60 4 L 70 20 Z" fill="#455A64" stroke="#1A2327" stroke-width="2.5" stroke-linejoin="round"/>
+      <path d="M 55 50 L 65 65 L 75 52 Z" fill="#455A64" stroke="#1A2327" stroke-width="2.5" stroke-linejoin="round"/>
+      <path d="M 80 32 Q 82 38 80 44" stroke="#1A2327" stroke-width="1.8" fill="none"/>
+      <path d="M 86 32 Q 88 38 86 44" stroke="#1A2327" stroke-width="1.8" fill="none"/>
+      <circle cx="105" cy="34" r="4" fill="white"/>
+      <circle cx="106" cy="35" r="2.5" fill="#1A2327"/>
+      <circle cx="107" cy="34" r="0.8" fill="white"/>
+      <path d="M 100 28 L 110 30" stroke="#1A2327" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M 95 46 Q 110 50 122 44" stroke="#1A2327" stroke-width="2.5" fill="#1A2327"/>
+      <polygon points="100,46 102,52 104,46" fill="white" stroke="#1A2327" stroke-width="1"/>
+      <polygon points="106,47 108,53 110,47" fill="white" stroke="#1A2327" stroke-width="1"/>
+      <polygon points="112,47 114,52 116,47" fill="white" stroke="#1A2327" stroke-width="1"/>
+      <polygon points="118,46 120,51 122,46" fill="white" stroke="#1A2327" stroke-width="1"/>
+    </g>
+  </svg>
+
+  <svg class="marymaid" id="marymaid" viewBox="0 0 90 110" style="transform: translateY(-50%);">
+    <g class="tail-wave">
+      <path d="M 45 70 Q 35 85 30 100 Q 45 95 60 100 Q 55 85 45 70 Z"
+            fill="#FF4081" stroke="#013A63" stroke-width="2.5" stroke-linejoin="round"/>
+      <path d="M 30 100 Q 20 105 18 95 Q 25 95 30 100 Z" fill="#FF80AB" stroke="#013A63" stroke-width="2"/>
+      <path d="M 60 100 Q 70 105 72 95 Q 65 95 60 100 Z" fill="#FF80AB" stroke="#013A63" stroke-width="2"/>
+      <circle cx="40" cy="78" r="2" fill="#F8BBD0"/>
+      <circle cx="50" cy="78" r="2" fill="#F8BBD0"/>
+      <circle cx="45" cy="85" r="2" fill="#F8BBD0"/>
+      <circle cx="38" cy="92" r="2" fill="#F8BBD0"/>
+      <circle cx="52" cy="92" r="2" fill="#F8BBD0"/>
+    </g>
+    <ellipse cx="45" cy="62" rx="13" ry="14" fill="#FFCC9F" stroke="#013A63" stroke-width="2.5"/>
+    <path d="M 32 58 Q 45 50 58 58 L 56 64 Q 45 60 34 64 Z" fill="#FF80AB" stroke="#013A63" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M 38 56 L 38 62 M 45 53 L 45 62 M 52 56 L 52 62" stroke="#C2185B" stroke-width="1.5" fill="none"/>
+    <circle cx="45" cy="35" r="16" fill="#FFCC9F" stroke="#013A63" stroke-width="2.5"/>
+    <path d="M 29 32 Q 25 20 35 18 Q 40 12 45 16 Q 50 12 55 18 Q 65 20 61 32 Q 62 42 58 45 L 58 38 Q 56 32 50 32 L 50 28 Q 45 24 40 28 L 40 32 Q 34 32 32 38 L 32 45 Q 28 42 29 32"
+          fill="#FF4081" stroke="#013A63" stroke-width="2.5" stroke-linejoin="round"/>
+    <ellipse cx="40" cy="35" rx="2.5" ry="3.5" fill="#013A63"/>
+    <ellipse cx="50" cy="35" rx="2.5" ry="3.5" fill="#013A63"/>
+    <circle cx="41" cy="34" r="1" fill="white"/>
+    <circle cx="51" cy="34" r="1" fill="white"/>
+    <path d="M 37 32 L 35 30 M 43 32 L 44 30" stroke="#013A63" stroke-width="1.2" stroke-linecap="round"/>
+    <path d="M 47 32 L 46 30 M 53 32 L 55 30" stroke="#013A63" stroke-width="1.2" stroke-linecap="round"/>
+    <circle cx="36" cy="40" r="2.5" fill="#FF80AB" opacity="0.6"/>
+    <circle cx="54" cy="40" r="2.5" fill="#FF80AB" opacity="0.6"/>
+    <path d="M 42 42 Q 45 45 48 42" stroke="#C2185B" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M 30 22 L 32 26 L 36 26 L 33 29 L 34 33 L 30 31 L 26 33 L 27 29 L 24 26 L 28 26 Z"
+          fill="#FFD93D" stroke="#013A63" stroke-width="1.5" stroke-linejoin="round"/>
+    <ellipse cx="30" cy="60" rx="4" ry="8" fill="#FFCC9F" stroke="#013A63" stroke-width="2" transform="rotate(-20 30 60)"/>
+    <ellipse cx="60" cy="60" rx="4" ry="8" fill="#FFCC9F" stroke="#013A63" stroke-width="2" transform="rotate(20 60 60)"/>
+  </svg>
+
+  <div class="feedback" id="feedback"></div>
+
+  <div class="question-panel hidden" id="questionPanel">
+    <div class="hint" id="hint">🌊 Solve before the shark catches you!</div>
+    <div class="equation">
+      <span id="num1">2</span>
+      <span>+</span>
+      <span id="num2">3</span>
+      <span>=</span>
+      <span class="qmark">?</span>
+    </div>
+    <div class="answers-grid" id="answersGrid"></div>
+  </div>
+
+  <div class="winscreen" id="winscreen">
+    <h1>🎉 Treasure!</h1>
+    <p>Marymaid escaped the shark<br/>and found the treasure!<br/>You earned <span id="finalScore">0</span> pearls! 🦪</p>
+    <button class="play-again" onclick="resetGame()">Play Again</button>
+  </div>
+
+  <div class="gameover" id="gameover">
+    <h1>🦈 Oh no!</h1>
+    <p>The shark caught Marymaid!<br/>You collected <span id="gameOverScore">0</span> pearls.<br/><br/>Solve faster next time! 💨</p>
+    <button class="play-again" onclick="resetGame()">Try Again</button>
+  </div>
+
+</div>
+
+<script>
+  // ============ DOM refs ============
+  const game = document.getElementById('game');
+  const marymaid = document.getElementById('marymaid');
+  const chaseShark = document.getElementById('chaseShark');
+  const treasure = document.getElementById('treasure');
+  const questionPanel = document.getElementById('questionPanel');
+  const num1El = document.getElementById('num1');
+  const num2El = document.getElementById('num2');
+  const answersGrid = document.getElementById('answersGrid');
+  const scoreEl = document.getElementById('score');
+  const levelNumEl = document.getElementById('levelNum');
+  const progressFill = document.getElementById('progressFill');
+  const feedback = document.getElementById('feedback');
+  const winscreen = document.getElementById('winscreen');
+  const gameover = document.getElementById('gameover');
+  const timerText = document.getElementById('timerText');
+  const timerRing = document.getElementById('timerRing');
+  const difficultyPick = document.getElementById('difficultyPick');
+  const hint = document.getElementById('hint');
+  const sharkMarker = document.getElementById('sharkMarker');
+  const lightRays = document.getElementById('lightRays');
+  const farLayer = document.getElementById('farLayer');
+  const midLayer = document.getElementById('midLayer');
+  const nearLayer = document.getElementById('nearLayer');
+
+  // ============ Game constants ============
+  const TIME_LIMIT = 20;             // seconds for shark to catch marymaid
+  const TOTAL_LEVELS = 8;
+  // currentGap: 1.0 = full initial distance, 0 = shark caught up.
+  // Shark closes at exactly 1/20 per second → 20s to close from 1.0 to 0.
+  const INITIAL_GAP = 1.0;
+  const GAP_DECAY_PER_SEC = INITIAL_GAP / TIME_LIMIT;
+  const SHARK_FAR_LEFT = -150;
+  const MARYMAID_LEFT_PCT = 0.6;
+
+  // ============ State ============
+  let score = 0;
+  let level = 1;
+  let correctAnswer = 0;
+  let locked = false;
+  let difficulty = 'easy';
+  let gameActive = false;
+  let currentGap = INITIAL_GAP;
+  let timeLeft = TIME_LIMIT;
+  let lastFrameTime = 0;
+  let boostUntil = 0;
+  let wrongAttempts = 0; // resets per question
+
+  // Background scroll offsets (negative => moving left)
+  let scrollFar = 0;
+  let scrollMid = 0;
+  let scrollNear = 0;
+  const BG_SPEEDS = { far: 25, mid: 60, near: 110 }; // px/sec base
+  const BOOST_MULT = 4;
+  const scrollMultiplier = 1; // base multiplier; boost period overrides
+
+  const CIRC = 2 * Math.PI * 26;
+
+  // ============ Build parallax scenery ============
+  function buildBackgrounds() {
+    farLayer.innerHTML = '';
+    for (let i = 0; i < 30; i++) {
+      const b = document.createElement('div');
+      b.className = 'bubble-far';
+      const size = 8 + Math.random() * 16;
+      b.style.width = b.style.height = size + 'px';
+      b.style.left = Math.random() * 100 + '%';
+      b.style.top = Math.random() * 70 + '%';
+      b.style.animationDelay = (Math.random() * 4) + 's';
+      farLayer.appendChild(b);
+    }
+    for (let i = 0; i < 5; i++) {
+      const r = document.createElement('div');
+      r.className = 'rock';
+      r.style.width = (60 + Math.random() * 60) + 'px';
+      r.style.height = (30 + Math.random() * 30) + 'px';
+      r.style.left = (i * 22 + Math.random() * 8) + '%';
+      r.style.opacity = '0.5';
+      farLayer.appendChild(r);
+    }
+
+    midLayer.innerHTML = '';
+    for (let i = 0; i < 8; i++) {
+      const s = document.createElement('div');
+      s.className = 'seaweed';
+      s.style.left = (i * 13 + Math.random() * 6) + '%';
+      s.style.height = (70 + Math.random() * 80) + 'px';
+      s.style.animationDelay = (Math.random() * 2) + 's';
+      s.style.animationDuration = (3 + Math.random() * 2) + 's';
+      midLayer.appendChild(s);
+    }
+    const coralColors = ['#FF6B9D','#FF8C42','#E91E63','#FF80AB'];
+    for (let i = 0; i < 5; i++) {
+      const c = document.createElement('div');
+      c.className = 'coral';
+      c.style.left = (8 + i * 20 + Math.random() * 6) + '%';
+      c.style.width = (35 + Math.random() * 20) + 'px';
+      c.style.height = (40 + Math.random() * 30) + 'px';
+      c.innerHTML = `
+        <svg viewBox="0 0 40 60" style="width:100%;height:100%">
+          <path d="M 20 60 Q 18 45 10 35 Q 15 30 18 25 Q 12 18 15 10 Q 20 15 22 5 Q 25 12 28 8 Q 30 18 25 25 Q 32 28 28 38 Q 22 45 20 60 Z"
+                fill="${coralColors[i%4]}" stroke="#013A63" stroke-width="1.5"/>
+        </svg>`;
+      midLayer.appendChild(c);
+    }
+
+    nearLayer.innerHTML = '';
+    for (let i = 0; i < 20; i++) {
+      const b = document.createElement('div');
+      b.className = 'bubble-near';
+      const size = 12 + Math.random() * 22;
+      b.style.width = b.style.height = size + 'px';
+      b.style.left = Math.random() * 100 + '%';
+      b.style.top = Math.random() * 100 + '%';
+      b.style.animationDelay = (Math.random() * 3) + 's';
+      nearLayer.appendChild(b);
+    }
+  }
+
+  // ============ Main game loop (requestAnimationFrame) ============
+  function gameLoop(timestamp) {
+    if (!lastFrameTime) lastFrameTime = timestamp;
+    const dt = Math.min((timestamp - lastFrameTime) / 1000, 0.1);
+    lastFrameTime = timestamp;
+
+    if (gameActive) {
+      const boosting = timestamp < boostUntil;
+      const mult = boosting ? BOOST_MULT : scrollMultiplier;
+      const w = game.offsetWidth;
+
+      // Scroll backgrounds leftward at constant speed.
+      // We keep offsets in (-w, 0] for seamless wraparound (layers are 200% wide).
+      scrollFar = ((scrollFar - BG_SPEEDS.far * mult * dt) % w + w) % w - w;
+      scrollMid = ((scrollMid - BG_SPEEDS.mid * mult * dt) % w + w) % w - w;
+      scrollNear = ((scrollNear - BG_SPEEDS.near * mult * dt) % w + w) % w - w;
+      farLayer.style.transform = `translateX(${scrollFar}px)`;
+      midLayer.style.transform = `translateX(${scrollMid}px)`;
+      nearLayer.style.transform = `translateX(${scrollNear}px)`;
+      lightRays.style.transform = `translateX(${scrollFar * 0.3}px)`;
+
+      // While the question is being shown (no boost), gap closes at constant rate.
+      if (!locked && !boosting) {
+        currentGap -= GAP_DECAY_PER_SEC * dt;
+        if (currentGap < 0) currentGap = 0;
+        timeLeft = Math.max(0, currentGap * TIME_LIMIT);
+        timerText.textContent = Math.ceil(timeLeft);
+
+        if (timeLeft <= 5) {
+          timerRing.classList.remove('warn');
+          timerRing.classList.add('danger');
+          timerText.classList.add('danger');
+        } else if (timeLeft <= 10) {
+          timerRing.classList.add('warn');
+          timerRing.classList.remove('danger');
+          timerText.classList.remove('danger');
+        } else {
+          timerRing.classList.remove('warn', 'danger');
+          timerText.classList.remove('danger');
+        }
+        timerRing.style.strokeDashoffset = (1 - currentGap) * CIRC;
+
+        // Position shark: from SHARK_FAR_LEFT (gap=1) → close behind marymaid (gap=0)
+        const marymaidPx = w * MARYMAID_LEFT_PCT;
+        const sharkNearPx = marymaidPx - 90;
+        const sharkLeft = SHARK_FAR_LEFT + (sharkNearPx - SHARK_FAR_LEFT) * (1 - currentGap);
+        chaseShark.style.left = sharkLeft + 'px';
+        sharkMarker.style.left = (4 + (90 - 4) * (1 - currentGap)) + '%';
+
+        if (currentGap <= 0) sharkCatches();
+      }
+    }
+
+    requestAnimationFrame(gameLoop);
+  }
+
+  // ============ Question generation ============
+  function generateQuestion() {
+    let a, b;
+    if (difficulty === 'easy') {
+      a = Math.floor(Math.random() * 5) + 1;
+      b = Math.floor(Math.random() * (10 - a)) + 1;
+    } else if (difficulty === 'medium') {
+      a = Math.floor(Math.random() * 10) + 1;
+      b = Math.floor(Math.random() * (20 - a)) + 1;
+    } else {
+      if (level <= 3) {
+        a = Math.floor(Math.random() * 15) + 5;
+        b = Math.floor(Math.random() * 15) + 5;
+      } else if (level <= 6) {
+        a = Math.floor(Math.random() * 25) + 10;
+        b = Math.floor(Math.random() * 25) + 10;
+      } else {
+        a = Math.floor(Math.random() * 40) + 15;
+        b = Math.floor(Math.random() * 40) + 15;
+      }
+    }
+    correctAnswer = a + b;
+    num1El.textContent = a;
+    num2El.textContent = b;
+
+    const choices = new Set([correctAnswer]);
+    const spread = difficulty === 'hard' ? 8 : 3;
+    while (choices.size < 4) {
+      const offset = Math.floor(Math.random() * spread * 2) - spread;
+      const candidate = correctAnswer + offset;
+      if (candidate > 0 && candidate !== correctAnswer) choices.add(candidate);
+    }
+    const shuffled = [...choices].sort(() => Math.random() - 0.5);
+    answersGrid.innerHTML = '';
+    shuffled.forEach(val => {
+      const btn = document.createElement('button');
+      btn.className = 'answer-btn';
+      btn.textContent = val;
+      btn.onclick = () => handleAnswer(val, btn);
+      answersGrid.appendChild(btn);
+    });
+  }
+
+  function showQuestion() {
+    if (!gameActive) return;
+    locked = false;
+    wrongAttempts = 0;
+    generateQuestion();
+    questionPanel.classList.remove('hidden');
+  }
+
+  function handleAnswer(val, btn) {
+    if (locked) return;
+    locked = true;
+
+    if (val === correctAnswer) {
+      btn.classList.add('correct');
+      score++;
+      scoreEl.textContent = score;
+      showFeedback(['Yay!', 'Splash!', 'Zoom!', 'Wow!', 'Bubbly!'][Math.floor(Math.random()*5)]);
+      sparkleBurst(game.offsetWidth * MARYMAID_LEFT_PCT, game.offsetHeight * 0.32);
+      marymaid.classList.add('boost');
+      spawnSpeedLines();
+
+      // Reset distance fully — marymaid bursts ahead, shark snaps back to start.
+      currentGap = INITIAL_GAP;
+      timeLeft = TIME_LIMIT;
+      boostUntil = performance.now() + 900; // background sprints for 0.9s
+
+      chaseShark.style.transition = 'left 0.9s ease-out';
+      chaseShark.style.left = SHARK_FAR_LEFT + 'px';
+      sharkMarker.style.left = '4%';
+
+      setTimeout(() => {
+        marymaid.classList.remove('boost');
+        questionPanel.classList.add('hidden');
+        chaseShark.style.transition = 'left 0.4s ease-out';
+      }, 900);
+
+      setTimeout(() => {
+        level++;
+        levelNumEl.textContent = Math.min(level, TOTAL_LEVELS);
+        progressFill.style.width = Math.min(100, ((level - 1) / TOTAL_LEVELS * 100)) + '%';
+        if (level > TOTAL_LEVELS) endGame();
+        else showQuestion();
+      }, 1300);
+
+    } else {
+      btn.classList.add('wrong');
+      wrongAttempts++;
+      showFeedback('Oops!');
+      // Wrong answer: penalty — shark closes in by 25% of remaining gap
+      currentGap = Math.max(0.02, currentGap - 0.25);
+
+      // Only reveal the correct answer after the SECOND wrong attempt
+      if (wrongAttempts >= 2) {
+        [...answersGrid.children].forEach(b => {
+          if (parseInt(b.textContent) === correctAnswer) b.classList.add('correct');
+        });
+      }
+
+      setTimeout(() => {
+        [...answersGrid.children].forEach(b => {
+          b.classList.remove('correct', 'wrong');
+        });
+        locked = false; // let them try again on the same question with remaining time
+      }, 1200);
+    }
+  }
+
+  function sharkCatches() {
+    if (!gameActive) return;
+    gameActive = false;
+    locked = true;
+    questionPanel.classList.add('hidden');
+
+    chaseShark.style.transition = 'left 0.4s ease-in';
+    const marymaidPx = game.offsetWidth * MARYMAID_LEFT_PCT;
+    chaseShark.style.left = (marymaidPx - 30) + 'px';
+    chaseShark.classList.add('lunge');
+
+    setTimeout(() => {
+      marymaid.classList.add('caught');
+      showFeedback('CHOMP!');
+    }, 400);
+
+    setTimeout(() => {
+      document.getElementById('gameOverScore').textContent = score;
+      gameover.classList.add('show');
+    }, 1800);
+  }
+
+  function showFeedback(text) {
+    feedback.textContent = text;
+    feedback.classList.remove('show');
+    void feedback.offsetWidth;
+    feedback.classList.add('show');
+  }
+
+  function sparkleBurst(cx, cy) {
+    for (let i = 0; i < 16; i++) {
+      const s = document.createElement('div');
+      s.className = 'sparkle';
+      s.style.left = cx + 'px';
+      s.style.top = cy + 'px';
+      game.appendChild(s);
+      const angle = (i / 16) * Math.PI * 2;
+      const dist = 60 + Math.random() * 60;
+      const dx = Math.cos(angle) * dist;
+      const dy = Math.sin(angle) * dist;
+      s.animate([
+        { transform: 'translate(0,0) scale(1)', opacity: 1 },
+        { transform: `translate(${dx}px, ${dy}px) scale(0)`, opacity: 0 }
+      ], { duration: 900, easing: 'cubic-bezier(.2,.7,.4,1)' });
+      setTimeout(() => s.remove(), 950);
+    }
+  }
+
+  function spawnSpeedLines() {
+    for (let i = 0; i < 12; i++) {
+      const l = document.createElement('div');
+      l.className = 'speed-line';
+      l.style.width = (40 + Math.random() * 80) + 'px';
+      l.style.left = (50 + Math.random() * 40) + '%';
+      l.style.top = (15 + Math.random() * 70) + '%';
+      l.style.animationDelay = (Math.random() * 0.3) + 's';
+      game.appendChild(l);
+      setTimeout(() => l.remove(), 800);
+    }
+  }
+
+  function endGame() {
+    gameActive = false;
+    locked = true;
+    chaseShark.style.transition = 'left 1s ease-in';
+    chaseShark.style.left = SHARK_FAR_LEFT + 'px';
+    treasure.classList.add('show');
+    marymaid.classList.add('celebrate');
+    showFeedback('🎉');
+    const mPx = game.offsetWidth * MARYMAID_LEFT_PCT;
+    sparkleBurst(mPx, game.offsetHeight * 0.32);
+    setTimeout(() => sparkleBurst(mPx, game.offsetHeight * 0.32), 400);
+    setTimeout(() => sparkleBurst(mPx, game.offsetHeight * 0.32), 800);
+    setTimeout(() => {
+      document.getElementById('finalScore').textContent = score;
+      winscreen.classList.add('show');
+    }, 2200);
+  }
+
+  function startGame(diff) {
+    difficulty = diff;
+    score = 0; level = 1;
+    currentGap = INITIAL_GAP;
+    timeLeft = TIME_LIMIT;
+    scoreEl.textContent = 0;
+    levelNumEl.textContent = 1;
+    progressFill.style.width = '0%';
+
+    if (diff === 'hard') hint.textContent = '🐙 Two-digit! Shark is fast — solve quick!';
+    else if (diff === 'medium') hint.textContent = '🐠 Solve fast — shark behind you!';
+    else hint.textContent = '🌊 Solve to swim faster than the shark!';
+
+    difficultyPick.classList.add('hidden');
+    treasure.classList.remove('show');
+    marymaid.classList.remove('celebrate', 'caught', 'boost');
+    chaseShark.style.transition = 'none';
+    chaseShark.style.left = SHARK_FAR_LEFT + 'px';
+    chaseShark.classList.remove('lunge');
+    sharkMarker.style.left = '4%';
+    timerText.textContent = TIME_LIMIT;
+    timerRing.style.strokeDashoffset = '0';
+
+    gameActive = true;
+    locked = false;
+    lastFrameTime = 0;
+    boostUntil = performance.now() + 600;
+
+    setTimeout(showQuestion, 300);
+  }
+
+  function resetGame() {
+    gameActive = false;
+    winscreen.classList.remove('show');
+    gameover.classList.remove('show');
+    difficultyPick.classList.remove('hidden');
+    treasure.classList.remove('show');
+    marymaid.classList.remove('celebrate', 'caught', 'boost');
+    chaseShark.style.transition = 'none';
+    chaseShark.style.left = SHARK_FAR_LEFT + 'px';
+    chaseShark.classList.remove('lunge');
+    questionPanel.classList.add('hidden');
+  }
+
+  // ============ Init ============
+  buildBackgrounds();
+  requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>

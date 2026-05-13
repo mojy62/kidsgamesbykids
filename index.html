@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kids Games By Kids</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Comic Sans MS', 'Trebuchet MS', sans-serif;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 50%, #a1c4fd 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+    color: #333;
+  }
+  h1 {
+    font-size: clamp(2rem, 6vw, 3.5rem);
+    color: #ff6b6b;
+    text-shadow: 3px 3px 0 #fff, 6px 6px 0 rgba(0,0,0,0.1);
+    margin-bottom: 10px;
+    text-align: center;
+  }
+  p.tagline {
+    font-size: 1.2rem;
+    color: #555;
+    margin-bottom: 40px;
+    text-align: center;
+  }
+  .games {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 24px;
+    max-width: 900px;
+    width: 100%;
+  }
+  .game-card {
+    background: #fff;
+    border-radius: 20px;
+    padding: 28px 24px;
+    text-decoration: none;
+    color: inherit;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 4px solid transparent;
+    text-align: center;
+  }
+  .game-card:hover {
+    transform: translateY(-6px) rotate(-1deg);
+    box-shadow: 0 14px 28px rgba(0,0,0,0.18);
+    border-color: #ffd166;
+  }
+  .game-emoji {
+    font-size: 4rem;
+    display: block;
+    margin-bottom: 12px;
+  }
+  .game-title {
+    font-size: 1.5rem;
+    color: #4361ee;
+    margin-bottom: 8px;
+  }
+  .game-desc {
+    font-size: 1rem;
+    color: #666;
+  }
+  footer {
+    margin-top: 50px;
+    font-size: 0.9rem;
+    color: #777;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+  <h1>Kids Games By Kids</h1>
+  <p class="tagline">Fun games to help you learn math!</p>
+
+  <div class="games">
+    <a class="game-card" href="marymaidsum/index.html">
+      <span class="game-emoji">➕</span>
+      <div class="game-title">Mary Maid Sum</div>
+      <div class="game-desc">Practice addition with Mary Maid!</div>
+    </a>
+
+    <a class="game-card" href="marymaidmultiply/marymaid-multiplication.html">
+      <span class="game-emoji">✖️</span>
+      <div class="game-title">Mary Maid Multiply</div>
+      <div class="game-desc">Master multiplication with Mary Maid!</div>
+    </a>
+  </div>
+
+  <footer>Made with ❤️ by kids, for kids.</footer>
+</body>
+</html>
