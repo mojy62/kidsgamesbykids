@@ -7,14 +7,21 @@
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Bowlby+One&display=swap" rel="stylesheet">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { height: 100%; overflow: hidden; font-family: 'Fredoka', sans-serif; user-select: none; }
+  html, body {
+    height: 100%;
+    height: 100dvh;
+    overflow: hidden; font-family: 'Fredoka', sans-serif; user-select: none;
+  }
   body {
     background: #001a33;
     display: flex; align-items: center; justify-content: center;
   }
 
   .game {
-    width: 100%; max-width: 480px; height: 100vh; max-height: 900px;
+    width: 100%; max-width: 480px;
+    height: 100vh;
+    height: 100dvh;
+    max-height: 900px;
     position: relative; overflow: hidden;
     background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 25%, #0288D1 55%, #01579B 85%, #002B5C 100%);
     box-shadow: 0 0 60px rgba(0,0,0,0.5);
@@ -244,12 +251,11 @@
     background: linear-gradient(180deg, rgba(255,248,236,0.98), rgba(255,241,214,0.98));
     border-top: 4px solid #013A63;
     border-radius: 28px 28px 0 0;
-    padding: 14px 18px 22px;
+    padding: 14px 18px max(22px, env(safe-area-inset-bottom));
     z-index: 20;
     box-shadow: 0 -8px 30px rgba(0,0,0,0.3);
     transform: translateY(0);
     transition: transform 0.5s cubic-bezier(.4,1.6,.6,1);
-    max-height: 48%;
   }
   .question-panel.hidden { transform: translateY(110%); }
 
@@ -404,6 +410,26 @@
   .diff-btn.easy { background: #C5E99B; }
   .diff-btn.medium { background: #FFD6A5; }
   .diff-btn.hard { background: #FFB7C5; }
+
+  /* Compact layout for short viewports (most phones in portrait) */
+  @media (max-height: 780px) {
+    .question-panel { padding: 10px 14px max(14px, env(safe-area-inset-bottom)); border-radius: 22px 22px 0 0; }
+    .equation { font-size: 30px; margin-bottom: 6px; gap: 8px; }
+    .qmark { min-width: 40px; height: 40px; border-radius: 10px; }
+    .hint { font-size: 12px; margin-bottom: 6px; }
+    .answers-grid { gap: 8px; }
+    .answer-btn { font-size: 24px; padding: 8px 0; border-width: 3px; border-radius: 14px; box-shadow: 0 4px 0 #013A63; }
+  }
+  @media (max-height: 640px) {
+    .question-panel { padding: 8px 12px max(10px, env(safe-area-inset-bottom)); }
+    .equation { font-size: 26px; margin-bottom: 4px; }
+    .qmark { min-width: 34px; height: 34px; }
+    .hint { font-size: 11px; margin-bottom: 4px; }
+    .answers-grid { gap: 6px; }
+    .answer-btn { font-size: 20px; padding: 6px 0; box-shadow: 0 3px 0 #013A63; }
+    .marymaid { width: 70px; height: 86px; }
+    .chase-shark { width: 120px; height: 64px; }
+  }
 </style>
 </head>
 <body>
