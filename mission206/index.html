@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Submarine's Ocean Math Adventure</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Bowlby+One&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    height: 100%;
+    height: 100dvh;
+    overflow: hidden; font-family: 'Fredoka', sans-serif; user-select: none;
+  }
+  body {
+    background: #001a33;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .game {
+    width: 100%; max-width: 480px;
+    height: 100vh;
+    height: 100dvh;
+    max-height: 900px;
+    position: relative; overflow: hidden;
+    background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 25%, #0288D1 55%, #01579B 85%, #002B5C 100%);
+    box-shadow: 0 0 60px rgba(0,0,0,0.5);
+  }
+
+  /* Light rays (very slow scroll) */
+  .light-rays {
+    position: absolute; top: 0; left: -50%; right: -50%; height: 60%;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.15) 0%, transparent 100%),
+      repeating-linear-gradient(105deg, transparent 0px, transparent 60px, rgba(255,255,255,0.06) 61px, rgba(255,255,255,0.06) 110px);
+    pointer-events: none;
+    will-change: transform;
+  }
+
+  /* Parallax scrolling layers */
+  .scroll-layer {
+    position: absolute; top: 0; left: 0;
+    width: 200%; height: 100%;
+    pointer-events: none;
+    will-change: transform;
+  }
+
+  .bubble-far {
+    position: absolute;
+    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.4), rgba(255,255,255,0.05));
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.2);
+    animation: bobVert 4s ease-in-out infinite;
+  }
+  .seaweed {
+    position: absolute; bottom: 0;
+    width: 30px; height: 120px;
+    background: linear-gradient(180deg, #2E7D32, #1B5E20);
+    border-radius: 50% 50% 0 0 / 30% 30% 0 0;
+    transform-origin: bottom center;
+    animation: sway 4s ease-in-out infinite;
+    opacity: 0.85;
+  }
+  @keyframes sway { 0%,100% { transform: rotate(-8deg); } 50% { transform: rotate(8deg); } }
+  .rock {
+    position: absolute; bottom: 0;
+    background: radial-gradient(ellipse at 30% 30%, #6D4C41, #3E2723);
+    border: 2px solid #1A0A05;
+    border-radius: 50% 50% 20% 20% / 70% 70% 30% 30%;
+  }
+  .coral {
+    position: absolute; bottom: 0;
+    width: 40px; height: 60px;
+    opacity: 0.9;
+  }
+  .bubble-near {
+    position: absolute;
+    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8), rgba(255,255,255,0.2));
+    border-radius: 50%;
+    border: 1.5px solid rgba(255,255,255,0.6);
+    animation: bobVert 2.5s ease-in-out infinite;
+  }
+  @keyframes bobVert {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-15px); }
+  }
+
+  /* HUD */
+  .hud {
+    position: absolute; top: 16px; left: 16px; right: 16px;
+    display: flex; justify-content: space-between; align-items: center;
+    z-index: 10; pointer-events: none;
+  }
+  .pearls, .level-badge {
+    background: rgba(255,255,255,0.95);
+    border: 3px solid #013A63;
+    border-radius: 999px;
+    padding: 6px 16px;
+    font-family: 'Bowlby One', cursive;
+    color: #013A63; font-size: 18px;
+    box-shadow: 0 3px 0 #013A63;
+  }
+
+  .progress-track {
+    position: absolute; top: 60px; left: 16px; right: 90px;
+    height: 14px; background: rgba(255,255,255,0.3);
+    border: 3px solid #013A63; border-radius: 999px;
+    overflow: hidden; z-index: 10;
+  }
+  .progress-fill {
+    height: 100%; width: 0%;
+    background: linear-gradient(90deg, #FFD93D, #FF8C42, #FF4081);
+    transition: width 0.6s cubic-bezier(.4,1.6,.6,1);
+    border-radius: 999px;
+  }
+
+  .distance-track {
+    position: absolute; top: 80px; left: 16px; right: 90px;
+    height: 22px; z-index: 10;
+    background: rgba(0,30,60,0.4);
+    border: 2px solid #013A63; border-radius: 999px;
+    display: flex; align-items: center; padding: 0 4px;
+    overflow: hidden;
+  }
+  .godzilla-marker, .maid-marker {
+    position: absolute; top: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 14px;
+    transition: left 0.4s ease-out;
+    line-height: 1;
+  }
+  .godzilla-marker { left: 4%; }
+  .maid-marker { left: 90%; }
+
+  /* Timer ring */
+  .timer-wrap {
+    position: absolute; top: 56px; right: 16px;
+    width: 60px; height: 60px;
+    z-index: 11;
+  }
+  .timer-ring {
+    width: 100%; height: 100%;
+    transform: rotate(-90deg);
+  }
+  .timer-ring-bg {
+    fill: rgba(255,255,255,0.9);
+    stroke: #013A63; stroke-width: 3;
+  }
+  .timer-ring-fg {
+    fill: none;
+    stroke: #4CAF50;
+    stroke-width: 6;
+    stroke-linecap: round;
+    transition: stroke 0.3s;
+  }
+  .timer-ring-fg.warn { stroke: #FF9800; }
+  .timer-ring-fg.danger { stroke: #F44336; animation: dangerPulse 0.5s infinite alternate; }
+  @keyframes dangerPulse { from { stroke-width: 6; } to { stroke-width: 9; } }
+  .timer-text {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Bowlby One', cursive;
+    font-size: 22px; color: #013A63;
+  }
+  .timer-text.danger { color: #F44336; animation: timerShake 0.3s infinite; }
+  @keyframes timerShake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-2px); }
+    75% { transform: translateX(2px); }
+  }
+
+  /* Submarine (fixed position on screen) */
+  .submarine {
+    position: absolute;
+    width: 90px; height: 110px;
+    left: 60%;
+    top: 32%;
+    z-index: 5;
+    animation: swimBob 2s ease-in-out infinite;
+  }
+  @keyframes swimBob {
+    0%,100% { transform: translateY(-50%) rotate(-3deg); }
+    50% { transform: translateY(calc(-50% - 8px)) rotate(3deg); }
+  }
+  .submarine.boost { animation: boost 0.8s ease-out; }
+  @keyframes boost {
+    0% { transform: translateY(-50%) scale(1); filter: drop-shadow(0 0 0 transparent); }
+    30% { transform: translateY(-50%) scale(1.15) translateX(15px); filter: drop-shadow(0 0 20px rgba(255,217,61,0.9)); }
+    100% { transform: translateY(-50%) scale(1); filter: drop-shadow(0 0 0 transparent); }
+  }
+  .submarine.celebrate { animation: celebrate 1s ease-out; }
+  @keyframes celebrate {
+    0% { transform: translateY(-50%) rotate(0); }
+    25% { transform: translateY(-50%) rotate(360deg) scale(1.2); }
+    50% { transform: translateY(-50%) rotate(720deg) scale(1.2); }
+    100% { transform: translateY(-50%) rotate(720deg) scale(1); }
+  }
+  .submarine.caught { animation: caught 1s ease-in forwards; }
+  @keyframes caught {
+    0% { transform: translateY(-50%) scale(1); opacity: 1; }
+    50% { transform: translateY(-50%) scale(1.3) rotate(180deg); opacity: 0.8; }
+    100% { transform: translateY(-50%) scale(0) rotate(360deg); opacity: 0; }
+  }
+
+  .tail-wave {
+    transform-origin: 50% 30%;
+    animation: tailFlick 0.6s ease-in-out infinite;
+  }
+  @keyframes tailFlick {
+    0%,100% { transform: rotate(-8deg); }
+    50% { transform: rotate(8deg); }
+  }
+
+  /* Chasing godzilla */
+  .chase-godzilla {
+    position: absolute;
+    width: 180px; height: 180px;
+    top: 32%;
+    transform: translateY(-50%);
+    z-index: 6;
+    transition: left 0.4s ease-out;
+    filter: drop-shadow(0 6px 12px rgba(0,0,0,0.4));
+  }
+  .chase-godzilla.lunge { animation: lunge 0.5s ease-in; }
+  @keyframes lunge {
+    0% { transform: translateY(-50%) scale(1); }
+    50% { transform: translateY(-50%) scale(1.2); }
+    100% { transform: translateY(-50%) scale(1); }
+  }
+  .godzilla-body {
+    animation: godzillaSwim 0.5s ease-in-out infinite;
+    transform-origin: 30% 50%;
+  }
+  @keyframes godzillaSwim {
+    0%,100% { transform: rotate(-1.5deg); }
+    50% { transform: rotate(1.5deg); }
+  }
+  .godzilla-tail-fin {
+    transform-box: fill-box;
+    transform-origin: 100% 0%;
+    animation: godzillaTail 0.5s ease-in-out infinite;
+  }
+  @keyframes godzillaTail {
+    0%,100% { transform: rotate(-18deg); }
+    50% { transform: rotate(18deg); }
+  }
+  .godzilla-arm {
+    transform-box: fill-box;
+    transform-origin: 0% 0%;
+    animation: godzillaArm 0.55s ease-in-out infinite;
+  }
+  .godzilla-arm.front { animation-delay: -0.275s; }
+  @keyframes godzillaArm {
+    0%,100% { transform: rotate(-10deg); }
+    50% { transform: rotate(12deg); }
+  }
+  .godzilla-leg {
+    transform-box: fill-box;
+    transform-origin: 50% 0%;
+    animation: godzillaLeg 0.55s ease-in-out infinite;
+  }
+  .godzilla-leg.front { animation-delay: -0.275s; }
+  @keyframes godzillaLeg {
+    0%,100% { transform: rotate(-14deg); }
+    50% { transform: rotate(14deg); }
+  }
+
+  /* Question panel */
+  .question-panel {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: linear-gradient(180deg, rgba(255,248,236,0.98), rgba(255,241,214,0.98));
+    border-top: 4px solid #013A63;
+    border-radius: 28px 28px 0 0;
+    padding: 14px 18px max(22px, env(safe-area-inset-bottom));
+    z-index: 20;
+    box-shadow: 0 -8px 30px rgba(0,0,0,0.3);
+    transform: translateY(0);
+    transition: transform 0.5s cubic-bezier(.4,1.6,.6,1);
+  }
+  .question-panel.hidden { transform: translateY(110%); }
+
+  .equation {
+    font-family: 'Bowlby One', cursive;
+    font-size: 36px; color: #013A63;
+    text-align: center;
+    display: flex; justify-content: center; align-items: center; gap: 10px;
+    margin-bottom: 10px;
+  }
+  .qmark {
+    background: #FF4081; color: white;
+    min-width: 48px; height: 48px; padding: 0 10px;
+    border-radius: 12px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 3px solid #013A63;
+    animation: pulse 1.2s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+
+  .hint {
+    text-align: center; color: #013A63; font-size: 13px;
+    margin-bottom: 10px; font-weight: 600;
+  }
+
+  .answers-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  }
+  .answer-btn {
+    background: white;
+    border: 4px solid #013A63;
+    border-radius: 18px;
+    font-family: 'Bowlby One', cursive;
+    font-size: 28px; color: #013A63;
+    padding: 10px 0; cursor: pointer;
+    box-shadow: 0 5px 0 #013A63;
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .answer-btn:nth-child(1) { background: #FFD6A5; }
+  .answer-btn:nth-child(2) { background: #C5E99B; }
+  .answer-btn:nth-child(3) { background: #A0E7E5; }
+  .answer-btn:nth-child(4) { background: #FFB7C5; }
+  .answer-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 #013A63; }
+  .answer-btn.correct { background: #7CDB5A !important; animation: correctPulse 0.5s; }
+  .answer-btn.wrong { animation: shakeBtn 0.4s; }
+  @keyframes correctPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+  @keyframes shakeBtn { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+
+  .feedback {
+    position: absolute; top: 22%; left: 50%; transform: translateX(-50%);
+    font-family: 'Bowlby One', cursive; font-size: 52px;
+    color: #FFD93D; text-shadow: 4px 4px 0 #013A63, 0 0 30px rgba(255,217,61,0.8);
+    opacity: 0; pointer-events: none; z-index: 30;
+  }
+  .feedback.show { animation: feedbackPop 1.4s ease-out; }
+  @keyframes feedbackPop {
+    0% { opacity: 0; transform: translate(-50%, 30px) scale(0.5); }
+    25% { opacity: 1; transform: translate(-50%, 0) scale(1.3); }
+    75% { opacity: 1; transform: translate(-50%, -10px) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -50px) scale(0.9); }
+  }
+
+  .sparkle {
+    position: absolute; width: 12px; height: 12px;
+    background: #FFD93D; border-radius: 50%;
+    box-shadow: 0 0 10px #FFD93D;
+    pointer-events: none; z-index: 25;
+  }
+
+  .speed-line {
+    position: absolute;
+    height: 2px; background: rgba(255,255,255,0.6);
+    border-radius: 999px;
+    pointer-events: none; z-index: 4;
+    animation: speedLine 0.5s linear forwards;
+  }
+  @keyframes speedLine {
+    0% { transform: translateX(0); opacity: 0.8; }
+    100% { transform: translateX(-300px); opacity: 0; }
+  }
+
+  .winscreen, .gameover {
+    position: absolute; inset: 0;
+    display: none; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 30px; z-index: 50;
+  }
+  .winscreen.show, .gameover.show { display: flex; animation: fadeIn 0.5s; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .winscreen {
+    background: linear-gradient(180deg, rgba(255,217,61,0.95), rgba(255,140,66,0.95));
+  }
+  .gameover {
+    background: linear-gradient(180deg, rgba(20,0,40,0.95), rgba(80,0,20,0.95));
+  }
+  .winscreen h1 {
+    font-family: 'Bowlby One', cursive; font-size: 38px;
+    color: #013A63; margin-bottom: 14px;
+    text-shadow: 3px 3px 0 white;
+  }
+  .gameover h1 {
+    font-family: 'Bowlby One', cursive; font-size: 38px;
+    color: #FFD93D; margin-bottom: 14px;
+    text-shadow: 3px 3px 0 #B71C1C;
+  }
+  .winscreen p { font-size: 20px; color: #013A63; margin-bottom: 24px; font-weight: 600; }
+  .gameover p { font-size: 18px; color: white; margin-bottom: 24px; font-weight: 600; }
+  .play-again {
+    background: #013A63; color: white;
+    border: 4px solid white;
+    border-radius: 20px; padding: 14px 32px;
+    font-family: 'Bowlby One', cursive; font-size: 22px;
+    cursor: pointer; box-shadow: 0 6px 0 rgba(0,0,0,0.3);
+  }
+  .gameover .play-again { background: #F44336; }
+  .play-again:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(0,0,0,0.3); }
+
+  .treasure {
+    position: absolute; right: -150px; top: 32%; transform: translateY(-50%);
+    width: 100px; height: 80px;
+    transition: right 2s ease-out;
+    z-index: 4;
+  }
+  .treasure.show { right: 20%; animation: treasureGlow 1.5s ease-in-out infinite alternate; }
+  @keyframes treasureGlow {
+    from { filter: drop-shadow(0 0 10px rgba(255,217,61,0.5)); }
+    to { filter: drop-shadow(0 0 25px rgba(255,217,61,1)); }
+  }
+
+  .difficulty-pick {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, #29B6F6, #01579B);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 100; padding: 24px;
+  }
+  .difficulty-pick.hidden { display: none; }
+  .difficulty-pick h1 {
+    font-family: 'Bowlby One', cursive; font-size: 34px;
+    color: white; text-align: center; margin-bottom: 8px;
+    text-shadow: 3px 3px 0 #013A63;
+  }
+  .difficulty-pick .subtitle { color: white; font-size: 16px; margin-bottom: 28px; font-weight: 600; text-align: center; }
+  .diff-btn {
+    width: 100%; max-width: 280px;
+    background: white; border: 4px solid #013A63;
+    border-radius: 22px; padding: 18px;
+    font-family: 'Bowlby One', cursive; font-size: 22px;
+    color: #013A63; margin-bottom: 14px;
+    cursor: pointer; box-shadow: 0 6px 0 #013A63;
+  }
+  .diff-btn small { display: block; font-family: 'Fredoka', sans-serif; font-size: 14px; font-weight: 600; margin-top: 4px; }
+  .diff-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #013A63; }
+  .diff-btn.easy { background: #C5E99B; }
+  .diff-btn.medium { background: #FFD6A5; }
+  .diff-btn.hard { background: #FFB7C5; }
+
+  /* Compact layout for short viewports (most phones in portrait) */
+  @media (max-height: 780px) {
+    .question-panel { padding: 10px 14px max(14px, env(safe-area-inset-bottom)); border-radius: 22px 22px 0 0; }
+    .equation { font-size: 30px; margin-bottom: 6px; gap: 8px; }
+    .qmark { min-width: 40px; height: 40px; border-radius: 10px; }
+    .hint { font-size: 12px; margin-bottom: 6px; }
+    .answers-grid { gap: 8px; }
+    .answer-btn { font-size: 24px; padding: 8px 0; border-width: 3px; border-radius: 14px; box-shadow: 0 4px 0 #013A63; }
+  }
+  @media (max-height: 640px) {
+    .question-panel { padding: 8px 12px max(10px, env(safe-area-inset-bottom)); }
+    .equation { font-size: 26px; margin-bottom: 4px; }
+    .qmark { min-width: 34px; height: 34px; }
+    .hint { font-size: 11px; margin-bottom: 4px; }
+    .answers-grid { gap: 6px; }
+    .answer-btn { font-size: 20px; padding: 6px 0; box-shadow: 0 3px 0 #013A63; }
+    .submarine { width: 70px; height: 86px; }
+    .chase-godzilla { width: 144px; height: 144px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="game" id="game">
+
+  <div class="difficulty-pick" id="difficultyPick">
+    <h1>🚢 Submarine's<br/>Ocean Adventure</h1>
+    <p class="subtitle">Swim away from the godzilla!<br/>Solve math to escape!</p>
+    <button class="diff-btn easy" onclick="startGame('easy')">
+      🌊 Splash Pool
+      <small>Sums up to 10</small>
+    </button>
+    <button class="diff-btn medium" onclick="startGame('medium')">
+      🐠 Coral Reef
+      <small>Sums up to 20</small>
+    </button>
+    <button class="diff-btn hard" onclick="startGame('hard')">
+      🐙 Deep Sea
+      <small>Two-digit sums!</small>
+    </button>
+  </div>
+
+  <div class="light-rays" id="lightRays"></div>
+  <div class="scroll-layer" id="farLayer"></div>
+  <div class="scroll-layer" id="midLayer"></div>
+  <div class="scroll-layer" id="nearLayer"></div>
+
+  <div class="hud">
+    <div class="level-badge">🌊 <span id="levelNum">1</span>/8</div>
+    <div class="pearls">🦪 <span id="score">0</span></div>
+  </div>
+  <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+  <div class="distance-track">
+    <div class="godzilla-marker" id="godzillaMarker">🦖</div>
+    <div class="maid-marker">🚢</div>
+  </div>
+
+  <div class="timer-wrap">
+    <svg class="timer-ring" viewBox="0 0 60 60">
+      <circle class="timer-ring-bg" cx="30" cy="30" r="26"/>
+      <circle class="timer-ring-fg" id="timerRing" cx="30" cy="30" r="26"
+              stroke-dasharray="163.36" stroke-dashoffset="0"/>
+    </svg>
+    <div class="timer-text" id="timerText">20</div>
+  </div>
+
+  <svg class="treasure" id="treasure" viewBox="0 0 100 80">
+    <rect x="10" y="35" width="80" height="40" fill="#8D5524" stroke="#3E2723" stroke-width="3" rx="3"/>
+    <path d="M 10 35 Q 10 15 50 15 Q 90 15 90 35 Z" fill="#A0522D" stroke="#3E2723" stroke-width="3"/>
+    <rect x="8" y="50" width="84" height="4" fill="#FFD93D" stroke="#3E2723" stroke-width="1.5"/>
+    <rect x="46" y="13" width="8" height="40" fill="#FFD93D" stroke="#3E2723" stroke-width="1.5"/>
+    <rect x="44" y="45" width="12" height="14" fill="#FFD93D" stroke="#3E2723" stroke-width="2" rx="2"/>
+    <circle cx="50" cy="51" r="2" fill="#3E2723"/>
+    <circle cx="25" cy="30" r="4" fill="#FFD93D" stroke="#3E2723" stroke-width="1.5"/>
+    <circle cx="75" cy="30" r="4" fill="#FFD93D" stroke="#3E2723" stroke-width="1.5"/>
+    <circle cx="50" cy="22" r="5" fill="#FFD93D" stroke="#3E2723" stroke-width="1.5"/>
+  </svg>
+
+  <svg class="chase-godzilla" id="chaseGodzilla" viewBox="0 0 200 200" style="left: -150px;">
+    <defs>
+      <radialGradient id="spineGlow" cx="50%" cy="60%" r="60%">
+        <stop offset="0%" stop-color="#E0F7FA"/>
+        <stop offset="55%" stop-color="#18FFFF"/>
+        <stop offset="100%" stop-color="#00838F"/>
+      </radialGradient>
+    </defs>
+    <g class="godzilla-body">
+      <g class="godzilla-tail-fin">
+        <path d="M 90 96 Q 70 102 50 112 Q 25 124 8 134 L 0 142 L 6 148 Q 28 142 50 132 Q 72 122 92 114 Z"
+              fill="#1A1A1A" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M 82 103 L 85 98 L 88 104 Z" fill="#2A2A2A" stroke="#000" stroke-width="0.7" stroke-linejoin="round"/>
+        <path d="M 70 109 L 73 104 L 76 110 Z" fill="#2A2A2A" stroke="#000" stroke-width="0.7" stroke-linejoin="round"/>
+        <path d="M 58 115 L 61 110 L 64 116 Z" fill="#2A2A2A" stroke="#000" stroke-width="0.7" stroke-linejoin="round"/>
+        <path d="M 46 121 L 49 116 L 52 122 Z" fill="#2A2A2A" stroke="#000" stroke-width="0.7" stroke-linejoin="round"/>
+        <path d="M 34 127 L 37 122 L 40 128 Z" fill="#2A2A2A" stroke="#000" stroke-width="0.7" stroke-linejoin="round"/>
+        <path d="M 22 133 L 25 128 L 28 134 Z" fill="#2A2A2A" stroke="#000" stroke-width="0.7" stroke-linejoin="round"/>
+        <path d="M 11 139 L 13 134 L 16 140 Z" fill="#2A2A2A" stroke="#000" stroke-width="0.7" stroke-linejoin="round"/>
+        <polygon points="73,104 75,99 78,105" fill="url(#spineGlow)" opacity="0.5"/>
+        <polygon points="49,116 51,111 54,117" fill="url(#spineGlow)" opacity="0.4"/>
+        <polygon points="25,128 27,123 30,129" fill="url(#spineGlow)" opacity="0.3"/>
+        <path d="M 30 135 Q 50 132 68 133 M 55 140 Q 72 137 88 138" stroke="#000" stroke-width="0.5" fill="none" opacity="0.55"/>
+        <circle cx="50" cy="140" r="0.7" fill="#000" opacity="0.5"/>
+        <circle cx="72" cy="143" r="0.7" fill="#000" opacity="0.5"/>
+        <circle cx="35" cy="138" r="0.6" fill="#000" opacity="0.5"/>
+      </g>
+      <g class="godzilla-leg back">
+        <ellipse cx="100" cy="120" rx="14" ry="22" fill="#0F0F0F" stroke="#000" stroke-width="2"/>
+        <path d="M 89 138 Q 92 158 95 178 L 105 178 Q 108 158 111 138 Z"
+              fill="#0F0F0F" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M 88 178 L 86 188 L 104 188 Z" fill="#0F0F0F" stroke="#000" stroke-width="1.5" stroke-linejoin="round"/>
+        <polygon points="86,188 82,193 87,193" fill="#D0D0D0" stroke="#000" stroke-width="0.7"/>
+        <polygon points="93,189 93,194 99,194" fill="#D0D0D0" stroke="#000" stroke-width="0.7"/>
+        <polygon points="101,188 102,193 106,191" fill="#D0D0D0" stroke="#000" stroke-width="0.7"/>
+      </g>
+      <g class="godzilla-arm back">
+        <path d="M 134 87 Q 140 94 142 102 L 144 108 L 140 110 L 136 102 Q 133 95 132 89 Z"
+              fill="#0F0F0F" stroke="#000" stroke-width="1.5" stroke-linejoin="round"/>
+        <polygon points="144,106 147,104 146,110" fill="#D0D0D0" stroke="#000" stroke-width="0.7"/>
+        <polygon points="142,110 146,110 143,115" fill="#D0D0D0" stroke="#000" stroke-width="0.7"/>
+      </g>
+      <ellipse cx="115" cy="100" rx="40" ry="20" fill="#1A1A1A" stroke="#000" stroke-width="2.5"/>
+      <path d="M 85 110 Q 115 120 145 110 Q 125 117 85 110 Z" fill="#3A3A3A" opacity="0.85"/>
+      <path d="M 92 102 Q 115 110 142 102 M 92 108 Q 115 114 142 108" stroke="#000" stroke-width="0.5" fill="none" opacity="0.5"/>
+      <polygon points="82,85 86,68 90,85" fill="url(#spineGlow)" stroke="#00838F" stroke-width="1.2" stroke-linejoin="round"/>
+      <polygon points="98,82 103,64 108,82" fill="url(#spineGlow)" stroke="#00838F" stroke-width="1.2" stroke-linejoin="round"/>
+      <polygon points="115,82 120,64 125,82" fill="url(#spineGlow)" stroke="#00838F" stroke-width="1.2" stroke-linejoin="round"/>
+      <polygon points="132,84 137,68 142,84" fill="url(#spineGlow)" stroke="#00838F" stroke-width="1.2" stroke-linejoin="round"/>
+      <g class="godzilla-leg front">
+        <ellipse cx="125" cy="122" rx="14" ry="22" fill="#1A1A1A" stroke="#000" stroke-width="2.5"/>
+        <path d="M 114 140 Q 117 162 120 184 L 130 184 Q 133 162 136 140 Z"
+              fill="#1A1A1A" stroke="#000" stroke-width="2.5" stroke-linejoin="round"/>
+        <path d="M 113 184 L 110 194 L 130 194 Z" fill="#1A1A1A" stroke="#000" stroke-width="1.8" stroke-linejoin="round"/>
+        <polygon points="110,194 106,199 112,199" fill="white" stroke="#000" stroke-width="0.8"/>
+        <polygon points="118,195 118,200 124,200" fill="white" stroke="#000" stroke-width="0.8"/>
+        <polygon points="127,194 128,199 132,197" fill="white" stroke="#000" stroke-width="0.8"/>
+      </g>
+      <g class="godzilla-arm front">
+        <path d="M 140 92 Q 147 100 149 110 L 152 115 L 148 117 L 143 110 Q 140 100 138 94 Z"
+              fill="#1A1A1A" stroke="#000" stroke-width="1.8" stroke-linejoin="round"/>
+        <ellipse cx="151" cy="115" rx="3" ry="2.5" fill="#1A1A1A" stroke="#000" stroke-width="1"/>
+        <polygon points="154,114 157,112 155,119" fill="white" stroke="#000" stroke-width="0.7"/>
+        <polygon points="152,118 156,118 153,123" fill="white" stroke="#000" stroke-width="0.7"/>
+      </g>
+      <path d="M 145 90 Q 158 78 172 76 L 178 84 Q 165 92 152 94 Z"
+            fill="#1A1A1A" stroke="#000" stroke-width="2.5" stroke-linejoin="round"/>
+      <path d="M 162 58 Q 178 48 198 56 Q 202 68 198 82 Q 195 92 185 95 Q 172 96 165 92 Q 152 86 148 75 Q 145 65 162 58 Z"
+            fill="#1A1A1A" stroke="#000" stroke-width="2.5" stroke-linejoin="round"/>
+      <path d="M 165 85 Q 180 95 198 90 L 196 100 Q 182 102 165 95 Z"
+            fill="#0D0D0D" stroke="#000" stroke-width="2.5" stroke-linejoin="round"/>
+      <ellipse cx="183" cy="93" rx="12" ry="2" fill="#18FFFF" opacity="0.4"/>
+      <polygon points="168,84 170,93 172,84" fill="white" stroke="#000" stroke-width="0.7"/>
+      <polygon points="175,84 177,94 179,84" fill="white" stroke="#000" stroke-width="0.7"/>
+      <polygon points="183,84 185,93 187,84" fill="white" stroke="#000" stroke-width="0.7"/>
+      <polygon points="191,84 193,92 195,84" fill="white" stroke="#000" stroke-width="0.7"/>
+      <polygon points="170,98 172,91 174,98" fill="white" stroke="#000" stroke-width="0.7"/>
+      <polygon points="180,99 182,91 184,99" fill="white" stroke="#000" stroke-width="0.7"/>
+      <polygon points="188,98 190,91 192,98" fill="white" stroke="#000" stroke-width="0.7"/>
+      <circle cx="172" cy="68" r="7" fill="#18FFFF" opacity="0.35"/>
+      <circle cx="172" cy="68" r="4.5" fill="white" stroke="#000" stroke-width="1.5"/>
+      <circle cx="173" cy="69" r="2.8" fill="#18FFFF"/>
+      <circle cx="173" cy="69" r="1.3" fill="#000"/>
+      <path d="M 162 60 L 180 65" stroke="#000" stroke-width="3" stroke-linecap="round"/>
+      <path d="M 170 52 L 173 44 L 176 52 Z" fill="#0F0F0F" stroke="#000" stroke-width="1.2" stroke-linejoin="round"/>
+      <path d="M 180 50 L 183 42 L 186 50 Z" fill="#0F0F0F" stroke="#000" stroke-width="1.2" stroke-linejoin="round"/>
+      <circle cx="193" cy="74" r="1.3" fill="#000"/>
+      <circle cx="196" cy="76" r="0.9" fill="#000"/>
+      <path d="M 155 75 Q 158 77 161 75 M 165 80 Q 168 82 171 80" stroke="#000" stroke-width="0.5" fill="none" opacity="0.5"/>
+    </g>
+  </svg>
+
+  <svg class="submarine" id="submarine" viewBox="0 0 90 110" style="transform: translateY(-50%);">
+    <g class="tail-wave">
+      <circle cx="10" cy="55" r="2.5" fill="#B3E5FC" opacity="0.7"/>
+      <circle cx="4" cy="62" r="2" fill="#B3E5FC" opacity="0.5"/>
+      <circle cx="8" cy="72" r="3" fill="#B3E5FC" opacity="0.6"/>
+      <circle cx="2" cy="50" r="1.5" fill="#B3E5FC" opacity="0.5"/>
+      <g transform="translate(18,65)">
+        <circle cx="0" cy="0" r="7" fill="#90A4AE" stroke="#013A63" stroke-width="2"/>
+        <ellipse cx="0" cy="0" rx="2" ry="7" fill="#546E7A" stroke="#013A63" stroke-width="1.5"/>
+        <ellipse cx="0" cy="0" rx="7" ry="2" fill="#546E7A" stroke="#013A63" stroke-width="1.5"/>
+        <circle cx="0" cy="0" r="1.8" fill="#263238"/>
+      </g>
+    </g>
+    <rect x="42" y="12" width="6" height="22" fill="#455A64" stroke="#013A63" stroke-width="2"/>
+    <rect x="36" y="8" width="16" height="8" fill="#455A64" stroke="#013A63" stroke-width="2" rx="2"/>
+    <rect x="48" y="10" width="6" height="4" fill="#FFD93D" stroke="#013A63" stroke-width="1"/>
+    <rect x="30" y="32" width="30" height="20" fill="#FFC107" stroke="#013A63" stroke-width="2.5" rx="5"/>
+    <rect x="34" y="37" width="6" height="6" fill="#81D4FA" stroke="#013A63" stroke-width="1.5" rx="1"/>
+    <rect x="50" y="37" width="6" height="6" fill="#81D4FA" stroke="#013A63" stroke-width="1.5" rx="1"/>
+    <ellipse cx="46" cy="65" rx="38" ry="18" fill="#FFC107" stroke="#013A63" stroke-width="2.5"/>
+    <ellipse cx="46" cy="55" rx="30" ry="3" fill="#FFE082" opacity="0.8"/>
+    <path d="M 12 72 Q 46 78 80 72" stroke="#013A63" stroke-width="1.5" fill="none" opacity="0.35"/>
+    <circle cx="26" cy="64" r="5" fill="#81D4FA" stroke="#013A63" stroke-width="2"/>
+    <circle cx="27" cy="63" r="1.5" fill="white" opacity="0.85"/>
+    <circle cx="46" cy="66" r="5" fill="#81D4FA" stroke="#013A63" stroke-width="2"/>
+    <circle cx="47" cy="65" r="1.5" fill="white" opacity="0.85"/>
+    <circle cx="64" cy="64" r="5" fill="#81D4FA" stroke="#013A63" stroke-width="2"/>
+    <circle cx="65" cy="63" r="1.5" fill="white" opacity="0.85"/>
+    <path d="M 82 65 Q 86 60 86 65 Q 86 70 82 65 Z" fill="#FFA000" stroke="#013A63" stroke-width="2"/>
+    <circle cx="80" cy="65" r="3.5" fill="#FFEB3B" stroke="#013A63" stroke-width="1.5"/>
+    <circle cx="80" cy="65" r="1.8" fill="white"/>
+    <path d="M 46 83 L 38 96 L 54 96 Z" fill="#FFA000" stroke="#013A63" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M 14 78 L 8 90 L 22 88 Z" fill="#FFA000" stroke="#013A63" stroke-width="2" stroke-linejoin="round"/>
+  </svg>
+
+  <div class="feedback" id="feedback"></div>
+
+  <div class="question-panel hidden" id="questionPanel">
+    <div class="hint" id="hint">🌊 Solve before the godzilla catches you!</div>
+    <div class="equation">
+      <span id="num1">2</span>
+      <span>+</span>
+      <span id="num2">3</span>
+      <span>=</span>
+      <span class="qmark">?</span>
+    </div>
+    <div class="answers-grid" id="answersGrid"></div>
+  </div>
+
+  <div class="winscreen" id="winscreen">
+    <h1>🎉 Treasure!</h1>
+    <p>Submarine escaped the godzilla<br/>and found the treasure!<br/>You earned <span id="finalScore">0</span> pearls! 🦪</p>
+    <button class="play-again" onclick="resetGame()">Play Again</button>
+  </div>
+
+  <div class="gameover" id="gameover">
+    <h1>🦖 Oh no!</h1>
+    <p>The godzilla caught Submarine!<br/>You collected <span id="gameOverScore">0</span> pearls.<br/><br/>Solve faster next time! 💨</p>
+    <button class="play-again" onclick="resetGame()">Try Again</button>
+  </div>
+
+</div>
+
+<script>
+  // ============ DOM refs ============
+  const game = document.getElementById('game');
+  const submarine = document.getElementById('submarine');
+  const chaseGodzilla = document.getElementById('chaseGodzilla');
+  const treasure = document.getElementById('treasure');
+  const questionPanel = document.getElementById('questionPanel');
+  const num1El = document.getElementById('num1');
+  const num2El = document.getElementById('num2');
+  const answersGrid = document.getElementById('answersGrid');
+  const scoreEl = document.getElementById('score');
+  const levelNumEl = document.getElementById('levelNum');
+  const progressFill = document.getElementById('progressFill');
+  const feedback = document.getElementById('feedback');
+  const winscreen = document.getElementById('winscreen');
+  const gameover = document.getElementById('gameover');
+  const timerText = document.getElementById('timerText');
+  const timerRing = document.getElementById('timerRing');
+  const difficultyPick = document.getElementById('difficultyPick');
+  const hint = document.getElementById('hint');
+  const godzillaMarker = document.getElementById('godzillaMarker');
+  const lightRays = document.getElementById('lightRays');
+  const farLayer = document.getElementById('farLayer');
+  const midLayer = document.getElementById('midLayer');
+  const nearLayer = document.getElementById('nearLayer');
+
+  // ============ Game constants ============
+  const TIME_LIMIT = 20;             // seconds for godzilla to catch submarine
+  const TOTAL_LEVELS = 8;
+  // currentGap: 1.0 = full initial distance, 0 = godzilla caught up.
+  // Godzilla closes at exactly 1/20 per second → 20s to close from 1.0 to 0.
+  const INITIAL_GAP = 1.0;
+  const GAP_DECAY_PER_SEC = INITIAL_GAP / TIME_LIMIT;
+  const SHARK_FAR_LEFT = -150;
+  const MARYMAID_LEFT_PCT = 0.6;
+
+  // ============ State ============
+  let score = 0;
+  let level = 1;
+  let correctAnswer = 0;
+  let locked = false;
+  let difficulty = 'easy';
+  let gameActive = false;
+  let currentGap = INITIAL_GAP;
+  let timeLeft = TIME_LIMIT;
+  let lastFrameTime = 0;
+  let boostUntil = 0;
+  let wrongAttempts = 0; // resets per question
+
+  // Background scroll offsets (negative => moving left)
+  let scrollFar = 0;
+  let scrollMid = 0;
+  let scrollNear = 0;
+  const BG_SPEEDS = { far: 25, mid: 60, near: 110 }; // px/sec base
+  const BOOST_MULT = 4;
+  const scrollMultiplier = 1; // base multiplier; boost period overrides
+
+  const CIRC = 2 * Math.PI * 26;
+
+  // ============ Build parallax scenery ============
+  function buildBackgrounds() {
+    farLayer.innerHTML = '';
+    for (let i = 0; i < 30; i++) {
+      const b = document.createElement('div');
+      b.className = 'bubble-far';
+      const size = 8 + Math.random() * 16;
+      b.style.width = b.style.height = size + 'px';
+      b.style.left = Math.random() * 100 + '%';
+      b.style.top = Math.random() * 70 + '%';
+      b.style.animationDelay = (Math.random() * 4) + 's';
+      farLayer.appendChild(b);
+    }
+    for (let i = 0; i < 5; i++) {
+      const r = document.createElement('div');
+      r.className = 'rock';
+      r.style.width = (60 + Math.random() * 60) + 'px';
+      r.style.height = (30 + Math.random() * 30) + 'px';
+      r.style.left = (i * 22 + Math.random() * 8) + '%';
+      r.style.opacity = '0.5';
+      farLayer.appendChild(r);
+    }
+
+    midLayer.innerHTML = '';
+    for (let i = 0; i < 8; i++) {
+      const s = document.createElement('div');
+      s.className = 'seaweed';
+      s.style.left = (i * 13 + Math.random() * 6) + '%';
+      s.style.height = (70 + Math.random() * 80) + 'px';
+      s.style.animationDelay = (Math.random() * 2) + 's';
+      s.style.animationDuration = (3 + Math.random() * 2) + 's';
+      midLayer.appendChild(s);
+    }
+    const coralColors = ['#FF6B9D','#FF8C42','#E91E63','#FF80AB'];
+    for (let i = 0; i < 5; i++) {
+      const c = document.createElement('div');
+      c.className = 'coral';
+      c.style.left = (8 + i * 20 + Math.random() * 6) + '%';
+      c.style.width = (35 + Math.random() * 20) + 'px';
+      c.style.height = (40 + Math.random() * 30) + 'px';
+      c.innerHTML = `
+        <svg viewBox="0 0 40 60" style="width:100%;height:100%">
+          <path d="M 20 60 Q 18 45 10 35 Q 15 30 18 25 Q 12 18 15 10 Q 20 15 22 5 Q 25 12 28 8 Q 30 18 25 25 Q 32 28 28 38 Q 22 45 20 60 Z"
+                fill="${coralColors[i%4]}" stroke="#013A63" stroke-width="1.5"/>
+        </svg>`;
+      midLayer.appendChild(c);
+    }
+
+    nearLayer.innerHTML = '';
+    for (let i = 0; i < 20; i++) {
+      const b = document.createElement('div');
+      b.className = 'bubble-near';
+      const size = 12 + Math.random() * 22;
+      b.style.width = b.style.height = size + 'px';
+      b.style.left = Math.random() * 100 + '%';
+      b.style.top = Math.random() * 100 + '%';
+      b.style.animationDelay = (Math.random() * 3) + 's';
+      nearLayer.appendChild(b);
+    }
+  }
+
+  // ============ Main game loop (requestAnimationFrame) ============
+  function gameLoop(timestamp) {
+    if (!lastFrameTime) lastFrameTime = timestamp;
+    const dt = Math.min((timestamp - lastFrameTime) / 1000, 0.1);
+    lastFrameTime = timestamp;
+
+    if (gameActive) {
+      const boosting = timestamp < boostUntil;
+      const mult = boosting ? BOOST_MULT : scrollMultiplier;
+      const w = game.offsetWidth;
+
+      // Scroll backgrounds leftward at constant speed.
+      // We keep offsets in (-w, 0] for seamless wraparound (layers are 200% wide).
+      scrollFar = ((scrollFar - BG_SPEEDS.far * mult * dt) % w + w) % w - w;
+      scrollMid = ((scrollMid - BG_SPEEDS.mid * mult * dt) % w + w) % w - w;
+      scrollNear = ((scrollNear - BG_SPEEDS.near * mult * dt) % w + w) % w - w;
+      farLayer.style.transform = `translateX(${scrollFar}px)`;
+      midLayer.style.transform = `translateX(${scrollMid}px)`;
+      nearLayer.style.transform = `translateX(${scrollNear}px)`;
+      lightRays.style.transform = `translateX(${scrollFar * 0.3}px)`;
+
+      // While the question is being shown (no boost), gap closes at constant rate.
+      if (!locked && !boosting) {
+        currentGap -= GAP_DECAY_PER_SEC * dt;
+        if (currentGap < 0) currentGap = 0;
+        timeLeft = Math.max(0, currentGap * TIME_LIMIT);
+        timerText.textContent = Math.ceil(timeLeft);
+
+        if (timeLeft <= 5) {
+          timerRing.classList.remove('warn');
+          timerRing.classList.add('danger');
+          timerText.classList.add('danger');
+        } else if (timeLeft <= 10) {
+          timerRing.classList.add('warn');
+          timerRing.classList.remove('danger');
+          timerText.classList.remove('danger');
+        } else {
+          timerRing.classList.remove('warn', 'danger');
+          timerText.classList.remove('danger');
+        }
+        timerRing.style.strokeDashoffset = (1 - currentGap) * CIRC;
+
+        // Position godzilla: from SHARK_FAR_LEFT (gap=1) → close behind submarine (gap=0)
+        const submarinePx = w * MARYMAID_LEFT_PCT;
+        const godzillaNearPx = submarinePx - 90;
+        const godzillaLeft = SHARK_FAR_LEFT + (godzillaNearPx - SHARK_FAR_LEFT) * (1 - currentGap);
+        chaseGodzilla.style.left = godzillaLeft + 'px';
+        godzillaMarker.style.left = (4 + (90 - 4) * (1 - currentGap)) + '%';
+
+        if (currentGap <= 0) godzillaCatches();
+      }
+    }
+
+    requestAnimationFrame(gameLoop);
+  }
+
+  // ============ Question generation ============
+  function generateQuestion() {
+    let a, b;
+    if (difficulty === 'easy') {
+      a = Math.floor(Math.random() * 5) + 1;
+      b = Math.floor(Math.random() * (10 - a)) + 1;
+    } else if (difficulty === 'medium') {
+      a = Math.floor(Math.random() * 10) + 1;
+      b = Math.floor(Math.random() * (20 - a)) + 1;
+    } else {
+      if (level <= 3) {
+        a = Math.floor(Math.random() * 15) + 5;
+        b = Math.floor(Math.random() * 15) + 5;
+      } else if (level <= 6) {
+        a = Math.floor(Math.random() * 25) + 10;
+        b = Math.floor(Math.random() * 25) + 10;
+      } else {
+        a = Math.floor(Math.random() * 40) + 15;
+        b = Math.floor(Math.random() * 40) + 15;
+      }
+    }
+    correctAnswer = a + b;
+    num1El.textContent = a;
+    num2El.textContent = b;
+
+    const choices = new Set([correctAnswer]);
+    const spread = difficulty === 'hard' ? 8 : 3;
+    while (choices.size < 4) {
+      const offset = Math.floor(Math.random() * spread * 2) - spread;
+      const candidate = correctAnswer + offset;
+      if (candidate > 0 && candidate !== correctAnswer) choices.add(candidate);
+    }
+    const shuffled = [...choices].sort(() => Math.random() - 0.5);
+    answersGrid.innerHTML = '';
+    shuffled.forEach(val => {
+      const btn = document.createElement('button');
+      btn.className = 'answer-btn';
+      btn.textContent = val;
+      btn.onclick = () => handleAnswer(val, btn);
+      answersGrid.appendChild(btn);
+    });
+  }
+
+  function showQuestion() {
+    if (!gameActive) return;
+    locked = false;
+    wrongAttempts = 0;
+    generateQuestion();
+    questionPanel.classList.remove('hidden');
+  }
+
+  function handleAnswer(val, btn) {
+    if (locked) return;
+    locked = true;
+
+    if (val === correctAnswer) {
+      btn.classList.add('correct');
+      score++;
+      scoreEl.textContent = score;
+      showFeedback(['Yay!', 'Splash!', 'Zoom!', 'Wow!', 'Bubbly!'][Math.floor(Math.random()*5)]);
+      sparkleBurst(game.offsetWidth * MARYMAID_LEFT_PCT, game.offsetHeight * 0.32);
+      submarine.classList.add('boost');
+      spawnSpeedLines();
+
+      // Reset distance fully — submarine bursts ahead, godzilla snaps back to start.
+      currentGap = INITIAL_GAP;
+      timeLeft = TIME_LIMIT;
+      boostUntil = performance.now() + 900; // background sprints for 0.9s
+
+      chaseGodzilla.style.transition = 'left 0.9s ease-out';
+      chaseGodzilla.style.left = SHARK_FAR_LEFT + 'px';
+      godzillaMarker.style.left = '4%';
+
+      setTimeout(() => {
+        submarine.classList.remove('boost');
+        questionPanel.classList.add('hidden');
+        chaseGodzilla.style.transition = 'left 0.4s ease-out';
+      }, 900);
+
+      setTimeout(() => {
+        level++;
+        levelNumEl.textContent = Math.min(level, TOTAL_LEVELS);
+        progressFill.style.width = Math.min(100, ((level - 1) / TOTAL_LEVELS * 100)) + '%';
+        if (level > TOTAL_LEVELS) endGame();
+        else showQuestion();
+      }, 1300);
+
+    } else {
+      btn.classList.add('wrong');
+      wrongAttempts++;
+      showFeedback('Oops!');
+      // Wrong answer: penalty — godzilla closes in by 25% of remaining gap
+      currentGap = Math.max(0.02, currentGap - 0.25);
+
+      // Only reveal the correct answer after the SECOND wrong attempt
+      if (wrongAttempts >= 2) {
+        [...answersGrid.children].forEach(b => {
+          if (parseInt(b.textContent) === correctAnswer) b.classList.add('correct');
+        });
+      }
+
+      setTimeout(() => {
+        [...answersGrid.children].forEach(b => {
+          b.classList.remove('correct', 'wrong');
+        });
+        locked = false; // let them try again on the same question with remaining time
+      }, 1200);
+    }
+  }
+
+  function godzillaCatches() {
+    if (!gameActive) return;
+    gameActive = false;
+    locked = true;
+    questionPanel.classList.add('hidden');
+
+    chaseGodzilla.style.transition = 'left 0.4s ease-in';
+    const submarinePx = game.offsetWidth * MARYMAID_LEFT_PCT;
+    chaseGodzilla.style.left = (submarinePx - 30) + 'px';
+    chaseGodzilla.classList.add('lunge');
+
+    setTimeout(() => {
+      submarine.classList.add('caught');
+      showFeedback('CHOMP!');
+    }, 400);
+
+    setTimeout(() => {
+      document.getElementById('gameOverScore').textContent = score;
+      gameover.classList.add('show');
+    }, 1800);
+  }
+
+  function showFeedback(text) {
+    feedback.textContent = text;
+    feedback.classList.remove('show');
+    void feedback.offsetWidth;
+    feedback.classList.add('show');
+  }
+
+  function sparkleBurst(cx, cy) {
+    for (let i = 0; i < 16; i++) {
+      const s = document.createElement('div');
+      s.className = 'sparkle';
+      s.style.left = cx + 'px';
+      s.style.top = cy + 'px';
+      game.appendChild(s);
+      const angle = (i / 16) * Math.PI * 2;
+      const dist = 60 + Math.random() * 60;
+      const dx = Math.cos(angle) * dist;
+      const dy = Math.sin(angle) * dist;
+      s.animate([
+        { transform: 'translate(0,0) scale(1)', opacity: 1 },
+        { transform: `translate(${dx}px, ${dy}px) scale(0)`, opacity: 0 }
+      ], { duration: 900, easing: 'cubic-bezier(.2,.7,.4,1)' });
+      setTimeout(() => s.remove(), 950);
+    }
+  }
+
+  function spawnSpeedLines() {
+    for (let i = 0; i < 12; i++) {
+      const l = document.createElement('div');
+      l.className = 'speed-line';
+      l.style.width = (40 + Math.random() * 80) + 'px';
+      l.style.left = (50 + Math.random() * 40) + '%';
+      l.style.top = (15 + Math.random() * 70) + '%';
+      l.style.animationDelay = (Math.random() * 0.3) + 's';
+      game.appendChild(l);
+      setTimeout(() => l.remove(), 800);
+    }
+  }
+
+  function endGame() {
+    gameActive = false;
+    locked = true;
+    chaseGodzilla.style.transition = 'left 1s ease-in';
+    chaseGodzilla.style.left = SHARK_FAR_LEFT + 'px';
+    treasure.classList.add('show');
+    submarine.classList.add('celebrate');
+    showFeedback('🎉');
+    const mPx = game.offsetWidth * MARYMAID_LEFT_PCT;
+    sparkleBurst(mPx, game.offsetHeight * 0.32);
+    setTimeout(() => sparkleBurst(mPx, game.offsetHeight * 0.32), 400);
+    setTimeout(() => sparkleBurst(mPx, game.offsetHeight * 0.32), 800);
+    setTimeout(() => {
+      document.getElementById('finalScore').textContent = score;
+      winscreen.classList.add('show');
+    }, 2200);
+  }
+
+  function startGame(diff) {
+    difficulty = diff;
+    score = 0; level = 1;
+    currentGap = INITIAL_GAP;
+    timeLeft = TIME_LIMIT;
+    scoreEl.textContent = 0;
+    levelNumEl.textContent = 1;
+    progressFill.style.width = '0%';
+
+    if (diff === 'hard') hint.textContent = '🐙 Two-digit! Godzilla is fast — solve quick!';
+    else if (diff === 'medium') hint.textContent = '🐠 Solve fast — godzilla behind you!';
+    else hint.textContent = '🌊 Solve to swim faster than the godzilla!';
+
+    difficultyPick.classList.add('hidden');
+    treasure.classList.remove('show');
+    submarine.classList.remove('celebrate', 'caught', 'boost');
+    chaseGodzilla.style.transition = 'none';
+    chaseGodzilla.style.left = SHARK_FAR_LEFT + 'px';
+    chaseGodzilla.classList.remove('lunge');
+    godzillaMarker.style.left = '4%';
+    timerText.textContent = TIME_LIMIT;
+    timerRing.style.strokeDashoffset = '0';
+
+    gameActive = true;
+    locked = false;
+    lastFrameTime = 0;
+    boostUntil = performance.now() + 600;
+
+    setTimeout(showQuestion, 300);
+  }
+
+  function resetGame() {
+    gameActive = false;
+    winscreen.classList.remove('show');
+    gameover.classList.remove('show');
+    difficultyPick.classList.remove('hidden');
+    treasure.classList.remove('show');
+    submarine.classList.remove('celebrate', 'caught', 'boost');
+    chaseGodzilla.style.transition = 'none';
+    chaseGodzilla.style.left = SHARK_FAR_LEFT + 'px';
+    chaseGodzilla.classList.remove('lunge');
+    questionPanel.classList.add('hidden');
+  }
+
+  // ============ Init ============
+  buildBackgrounds();
+  requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
