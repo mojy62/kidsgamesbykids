@@ -1,0 +1,1599 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Godzilla — Articulated Rig</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  :root {
+    --bg-0:#0c1414;
+    --bg-1:#142322;
+    --bg-2:#1a2e2c;
+    --ink:#e6efe9;
+    --ink-dim:#8aa39c;
+    --line:#22403d;
+    --accent:#6ce8ff;
+    --accent-warm:#ffc83a;
+    --danger:#ff7a5a;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    background:
+      radial-gradient(1200px 700px at 30% 20%, #0e1c1c 0%, transparent 60%),
+      radial-gradient(900px 600px at 90% 90%, #102826 0%, transparent 55%),
+      var(--bg-0);
+    color:var(--ink);
+    font:14px/1.4 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Inter, sans-serif;
+    overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  .app{
+    display:grid;
+    grid-template-columns: 1fr 320px;
+    gap:0;
+    height:100vh;
+  }
+  .stage{
+    position:relative;
+    overflow:hidden;
+    background:
+      radial-gradient(60% 40% at 50% 75%, rgba(108,232,255,.06), transparent 70%),
+      linear-gradient(180deg, #0a1414 0%, #0d1c1b 65%, #0a1413 100%);
+  }
+  .stage::before{
+    content:"";
+    position:absolute; inset:0;
+    background:
+      repeating-linear-gradient(90deg, rgba(108,232,255,.04) 0 1px, transparent 1px 80px),
+      repeating-linear-gradient(0deg, rgba(108,232,255,.04) 0 1px, transparent 1px 80px);
+    mask: radial-gradient(60% 60% at 50% 60%, #000 30%, transparent 80%);
+    pointer-events:none;
+    transition: opacity .5s ease;
+  }
+  .stage.underwater{
+    background:
+      radial-gradient(80% 60% at 50% 35%, #18475a 0%, #0a2a38 55%, #06192a 100%);
+  }
+  .stage.underwater::before{ opacity:.3 }
+  .stage.underwater .ground{ opacity:.2 }
+  .caustics{
+    position:absolute; inset:0;
+    background:
+      radial-gradient(circle at 20% 30%, rgba(180,240,255,.18) 0 2px, transparent 4px),
+      radial-gradient(circle at 70% 10%, rgba(180,240,255,.14) 0 2px, transparent 4px),
+      radial-gradient(circle at 40% 80%, rgba(180,240,255,.10) 0 2px, transparent 4px);
+    background-size: 220px 220px, 280px 280px, 200px 200px;
+    opacity:0;
+    pointer-events:none;
+    transition: opacity .6s ease;
+    mix-blend-mode: screen;
+    animation: drift 18s linear infinite;
+  }
+  .stage.underwater .caustics{ opacity:.55 }
+  @keyframes drift{
+    0%{ background-position: 0 0, 0 0, 0 0 }
+    100%{ background-position: 220px -110px, -280px 140px, 200px -200px }
+  }
+  .ground{
+    position:absolute; left:0; right:0; bottom:0;
+    height:120px;
+    background:linear-gradient(180deg, transparent, rgba(0,0,0,.55));
+    pointer-events:none;
+  }
+  svg.rig{
+    position:absolute; inset:0;
+    width:100%; height:100%;
+    touch-action:none;
+    cursor:grab;
+  }
+  svg.rig.dragging{cursor:grabbing}
+  .joint{cursor:grab}
+  .joint:hover .hover-ring{opacity:.85}
+  .hover-ring{opacity:0; transition:opacity .12s ease}
+  .pivot-dot{opacity:0; transition:opacity .12s ease}
+  body.show-pivots .pivot-dot{opacity:.7}
+
+  /* Title chip */
+  .chip{
+    position:absolute; top:18px; left:20px;
+    display:flex; gap:10px; align-items:center;
+    padding:8px 14px;
+    background:rgba(14,28,28,.6);
+    border:1px solid var(--line);
+    border-radius:999px;
+    color:var(--ink-dim);
+    font-size:12px; letter-spacing:.12em; text-transform:uppercase;
+    backdrop-filter: blur(8px);
+  }
+  .chip b{color:var(--ink); letter-spacing:.18em}
+  .chip .dot{
+    width:8px; height:8px; border-radius:50%;
+    background:var(--accent); box-shadow:0 0 12px var(--accent);
+    animation:pulse 2.2s ease-in-out infinite;
+  }
+  @keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
+
+  .hint{
+    position:absolute; bottom:18px; left:20px;
+    color:var(--ink-dim); font-size:12px;
+    letter-spacing:.04em;
+    background:rgba(14,28,28,.55);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:8px 12px;
+    backdrop-filter: blur(8px);
+  }
+  .hint kbd{
+    display:inline-block;
+    border:1px solid var(--line);
+    border-bottom-width:2px;
+    background:#0e1c1c;
+    border-radius:4px;
+    padding:1px 6px;
+    font:11px ui-monospace, monospace;
+    color:var(--ink);
+    margin:0 3px;
+  }
+
+  /* Side panel */
+  .panel{
+    background:var(--bg-1);
+    border-left:1px solid var(--line);
+    display:flex; flex-direction:column;
+    min-height:0;
+  }
+  .panel header{
+    padding:16px 18px 12px;
+    border-bottom:1px solid var(--line);
+  }
+  .panel header h1{
+    margin:0 0 4px;
+    font-size:13px; font-weight:600;
+    letter-spacing:.18em; text-transform:uppercase;
+    color:var(--ink);
+  }
+  .panel header p{
+    margin:0; color:var(--ink-dim); font-size:12px;
+  }
+  .panel .scroll{
+    flex:1; overflow-y:auto;
+    padding:12px 18px 80px;
+  }
+  .panel .scroll::-webkit-scrollbar{width:10px}
+  .panel .scroll::-webkit-scrollbar-thumb{background:#1f3a37; border-radius:6px}
+  .panel .scroll::-webkit-scrollbar-track{background:transparent}
+
+  .row-presets{
+    display:grid; grid-template-columns: repeat(3, 1fr);
+    gap:6px;
+    margin-bottom:14px;
+  }
+  .preset{
+    appearance:none; border:1px solid var(--line);
+    background:#0f1f1e;
+    color:var(--ink);
+    padding:8px 6px;
+    border-radius:6px;
+    font:11px ui-sans-serif, system-ui, sans-serif;
+    letter-spacing:.1em; text-transform:uppercase;
+    cursor:pointer; transition:.12s ease;
+  }
+  .preset:hover{background:#163030; border-color:#2f5754}
+  .preset.primary{
+    background:linear-gradient(180deg,#1a3d3a,#0f2b29);
+    border-color:#2f6e6a; color:#cdfaff;
+  }
+  .preset.warm{
+    background:linear-gradient(180deg,#3d2a18,#2a1c10);
+    border-color:#6e4a2f; color:#ffd8a8;
+  }
+
+  .row-actions{
+    display:grid; grid-template-columns: 1fr 1fr;
+    gap:6px; margin-bottom:14px;
+  }
+
+  .group{
+    border-top:1px solid var(--line);
+    padding:10px 0;
+  }
+  .group-title{
+    display:flex; justify-content:space-between; align-items:center;
+    font-size:11px; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--ink-dim);
+    margin:0 0 6px;
+  }
+  .slider{
+    display:grid; grid-template-columns: 84px 1fr 44px;
+    align-items:center; gap:10px;
+    padding:4px 0;
+  }
+  .slider label{font-size:12px; color:var(--ink-dim)}
+  .slider .val{
+    font:11px ui-monospace, monospace;
+    color:var(--ink); text-align:right;
+    background:#0e1c1c; border:1px solid var(--line);
+    border-radius:4px; padding:2px 4px;
+  }
+  input[type="range"]{
+    -webkit-appearance:none; appearance:none;
+    width:100%; height:18px; background:transparent; cursor:ew-resize;
+  }
+  input[type="range"]::-webkit-slider-runnable-track{
+    height:3px; background:#1c3a37; border-radius:2px;
+  }
+  input[type="range"]::-moz-range-track{
+    height:3px; background:#1c3a37; border-radius:2px;
+  }
+  input[type="range"]::-webkit-slider-thumb{
+    -webkit-appearance:none; appearance:none;
+    width:14px; height:14px; border-radius:50%;
+    background:var(--accent);
+    border:2px solid #0a1414;
+    margin-top:-6px;
+    box-shadow:0 0 8px rgba(108,232,255,.5);
+  }
+  input[type="range"]::-moz-range-thumb{
+    width:12px; height:12px; border-radius:50%;
+    background:var(--accent); border:2px solid #0a1414;
+  }
+
+  .toggle{
+    display:flex; align-items:center; gap:8px;
+    padding:8px 0;
+    color:var(--ink-dim); font-size:12px;
+  }
+  .toggle input{accent-color:var(--accent)}
+
+  /* Atomic breath beam */
+  .beam-layer{pointer-events:none}
+</style>
+</head>
+<body>
+  <div class="app">
+    <div class="stage" id="stage">
+      <div class="chip"><span class="dot"></span><b>Godzilla</b> &middot; RIG v1</div>
+      <div class="caustics"></div>
+      <div class="ground"></div>
+      <!-- SVG rig is injected here -->
+      <div class="hint">
+        Drag a limb to pose &middot; <kbd>R</kbd> reset &middot; <kbd>B</kbd> breath &middot; <kbd>Space</kbd> walk &middot; <kbd>S</kbd> swim
+      </div>
+    </div>
+
+    <aside class="panel">
+      <header>
+        <h1>Pose Controller</h1>
+        <p>17 joints &middot; FK rig &middot; click body parts to rotate</p>
+      </header>
+      <div class="scroll">
+        <div class="row-presets">
+          <button class="preset primary" data-pose="idle">Idle</button>
+          <button class="preset" data-pose="tpose">T&#8209;Pose</button>
+          <button class="preset" data-pose="walk">Walk</button>
+          <button class="preset" data-pose="roar">Roar</button>
+          <button class="preset" data-pose="stomp">Stomp</button>
+          <button class="preset warm" data-pose="attack">Attack</button>
+        </div>
+        <div class="row-actions">
+          <button class="preset" id="btn-animate">▶ Walk cycle</button>
+          <button class="preset" id="btn-swim">🌊 Swim mode</button>
+          <button class="preset warm" id="btn-breath" style="grid-column:1/-1">⚡ Atomic breath</button>
+        </div>
+        <label class="toggle"><input type="checkbox" id="tg-pivots" /> Show joint pivots</label>
+        <label class="toggle"><input type="checkbox" id="tg-bones" /> X&#8209;ray bones</label>
+
+        <div class="group">
+          <h3 class="group-title"><span>Spine Shape</span></h3>
+          <div class="row-actions">
+            <button class="preset primary" id="btn-saveSpine">⭐ Save spine</button>
+            <button class="preset" id="btn-resetSpine">↻ Reset spine</button>
+          </div>
+        </div>
+
+        <div id="sliders"></div>
+      </div>
+    </aside>
+  </div>
+
+<script>
+/* ==========================================================================
+   GODZILLA RIG  —  vanilla JS + SVG
+   Each joint = <g> with transform = translate(px py) rotate(angle).
+   Inner content is drawn in absolute T-pose coords inside a translate(-px -py)
+   wrapper, so I can author all geometry in one coordinate system.
+========================================================================== */
+
+// ---------- Pivots (T-pose, in viewBox coordinates) ----------
+const PIVOTS = {
+  root:        [600, 400],   // whole-character translate (no rotation used)
+
+  // tail chain (going from body backwards / left)
+  tail1:       [470, 420],
+  tail2:       [400, 445],
+  tail3:       [335, 475],
+  tail4:       [275, 505],
+  tail5:       [225, 530],
+  tail6:       [185, 550],
+
+  // head
+  neck:        [705, 285],
+  jaw:         [800, 308],   // in head local space
+
+  // FAR (back) arm
+  fShoulder:   [620, 305],
+  fElbow:      [648, 372],
+  fWrist:      [678, 418],
+
+  // NEAR (front) arm
+  nShoulder:   [660, 298],
+  nElbow:      [690, 368],
+  nWrist:      [720, 412],
+
+  // FAR (back) leg
+  fHip:        [555, 425],
+  fKnee:       [578, 528],
+  fAnkle:      [572, 618],
+
+  // NEAR (front) leg
+  nHip:        [610, 422],
+  nKnee:       [638, 528],
+  nAnkle:      [628, 622],
+};
+
+// ---------- Spine arc state (draggable) ----------
+const SPINE = {
+  start: [648, 246],  // upper-back near the head
+  end:   [480, 374],  // tail attachment
+  arch:  24,          // perpendicular sag at the midpoint (negative-y peak)
+};
+
+// ---------- Pose state ----------
+const DEFAULT_POSE = {
+  // root translation done via translate; we keep rotation 0
+  tail1:  -8, tail2: -10, tail3: -14, tail4: -18, tail5: -22, tail6: -26,
+  neck:    0, jaw:   0,
+  // T-rex pose: upper arms hang ~vertical, elbows flex forward so forearm
+  // points toward face. Positive elbow value = more flex toward face.
+  fShoulder: 22, fElbow: 75, fWrist: 28,
+  nShoulder: 18, nElbow: 70, nWrist: 30,
+  fHip:   -4,  fKnee:  6,   fAnkle: 0,
+  nHip:    4,  nKnee:  -4,  nAnkle: 0,
+};
+
+// Joints whose displayed/slider angle is inverted vs. the raw SVG rotation.
+// Lets the elbow read "positive = bend forward" anatomically.
+const INVERT_JOINTS = new Set(['nElbow','fElbow']);
+
+// Parent-of map for the FK chain (used for computing world positions in viewBox
+// coords WITHOUT getCTM, which returns screen pixels per the SVG2 spec).
+const PARENT = {
+  tail2:'tail1', tail3:'tail2', tail4:'tail3', tail5:'tail4', tail6:'tail5',
+  jaw:'neck',
+  nElbow:'nShoulder', nWrist:'nElbow',
+  fElbow:'fShoulder', fWrist:'fElbow',
+  nKnee:'nHip',       nAnkle:'nKnee',
+  fKnee:'fHip',       fAnkle:'fKnee',
+};
+
+// Pivot of `joint` after walking its parent rotation chain — in viewBox coords.
+function getJointWorld(joint){
+  const piv = PIVOTS[joint]; if (!piv) return null;
+  let x = piv[0], y = piv[1];
+  let cur = PARENT[joint];
+  while (cur){
+    const raw = POSE[cur] || 0;
+    const ang = (INVERT_JOINTS.has(cur) ? -raw : raw) * Math.PI/180;
+    const [px, py] = PIVOTS[cur];
+    const dx = x - px, dy = y - py;
+    x = px + dx*Math.cos(ang) - dy*Math.sin(ang);
+    y = py + dx*Math.sin(ang) + dy*Math.cos(ang);
+    cur = PARENT[cur];
+  }
+  return { x, y };
+}
+let POSE = {...DEFAULT_POSE};
+
+// ---------- Preset poses ----------
+const POSES = {
+  tpose: Object.fromEntries(Object.keys(DEFAULT_POSE).map(k=>[k,0])),
+  idle:  {...DEFAULT_POSE},
+  walk:  {
+    tail1: 4, tail2: 8, tail3: 12, tail4: 14, tail5: 12, tail6: 10,
+    neck: -3, jaw: 0,
+    fShoulder: 18, fElbow: 82, fWrist: 26,
+    nShoulder: 24, nElbow: 64, nWrist: 32,
+    fHip: 22, fKnee: -34, fAnkle: 12,
+    nHip: -22, nKnee: 30, nAnkle: -10,
+  },
+  roar: {
+    tail1: -14, tail2: -22, tail3: -28, tail4: -30, tail5: -26, tail6: -22,
+    neck: -22, jaw: 38,
+    fShoulder: -8,  fElbow: 110, fWrist: 12,
+    nShoulder: -14, nElbow: 118, nWrist:  8,
+    fHip: 2, fKnee: 4, fAnkle: 0,
+    nHip: -2, nKnee: -2, nAnkle: 0,
+  },
+  stomp: {
+    tail1: 8, tail2: 10, tail3: 14, tail4: 18, tail5: 22, tail6: 26,
+    neck: 6, jaw: 12,
+    fShoulder: 20, fElbow: 80, fWrist: 26,
+    nShoulder: 16, nElbow: 72, nWrist: 30,
+    fHip: 4, fKnee: 8, fAnkle: 0,
+    nHip: -42, nKnee: 60, nAnkle: -10,
+  },
+  attack: {
+    tail1: -4, tail2: -10, tail3: -16, tail4: -20, tail5: -24, tail6: -28,
+    neck: -10, jaw: 26,
+    fShoulder: -38, fElbow: 28, fWrist: -10,
+    nShoulder: -46, nElbow: 22, nWrist: -16,
+    fHip: -6, fKnee: 14, fAnkle: -4,
+    nHip: 6, nKnee: -10, nAnkle: 4,
+  },
+};
+
+// ---------- Joint metadata for sliders / groups ----------
+const GROUPS = [
+  { name: 'Head & Jaw', joints: [
+    ['neck','Neck',-60,40],
+    ['jaw','Jaw',-5,55],
+  ]},
+  { name: 'Right (Near) Arm', joints: [
+    ['nShoulder','Shoulder',-90,140],
+    ['nElbow','Elbow',-10,140],
+    ['nWrist','Wrist',-60,90],
+  ]},
+  { name: 'Left (Far) Arm', joints: [
+    ['fShoulder','Shoulder',-90,140],
+    ['fElbow','Elbow',-10,140],
+    ['fWrist','Wrist',-60,90],
+  ]},
+  { name: 'Right (Near) Leg', joints: [
+    ['nHip','Hip',-60,60],
+    ['nKnee','Knee',-90,90],
+    ['nAnkle','Ankle',-40,40],
+  ]},
+  { name: 'Left (Far) Leg', joints: [
+    ['fHip','Hip',-60,60],
+    ['fKnee','Knee',-90,90],
+    ['fAnkle','Ankle',-40,40],
+  ]},
+  { name: 'Tail', joints: [
+    ['tail1','Base',-50,50],
+    ['tail2','Seg 2',-50,50],
+    ['tail3','Seg 3',-50,50],
+    ['tail4','Seg 4',-50,50],
+    ['tail5','Seg 5',-50,50],
+    ['tail6','Tip',-50,50],
+  ]},
+];
+
+// ---------- SVG construction helpers ----------
+function J(id, contents){
+  const [px,py] = PIVOTS[id];
+  return `<g id="jnt-${id}" class="joint" data-joint="${id}" data-px="${px}" data-py="${py}"
+            transform="translate(${px} ${py}) rotate(0)">
+    <g transform="translate(${-px} ${-py})">
+      ${contents}
+      <circle class="pivot-dot" cx="${px}" cy="${py}" r="5" fill="#ff7a5a"/>
+    </g>
+  </g>`;
+}
+
+/* A "limb segment" — thick rounded stroke from A to B with depth + claw cap */
+function limb(ax, ay, bx, by, opts={}){
+  const {w=42, col='var(--skin-mid)', shadow='var(--skin-dark)', light='var(--skin-light)', stripe=false} = opts;
+  const dx=bx-ax, dy=by-ay;
+  // perpendicular for highlight stripe
+  const ang = Math.atan2(dy,dx);
+  // a few scale bumps along the limb
+  const len = Math.hypot(dx,dy);
+  let bumps = '';
+  if (stripe){
+    const steps = Math.max(2, Math.floor(len/22));
+    for (let i=1;i<steps;i++){
+      const t = i/steps;
+      const cx = ax + dx*t, cy = ay + dy*t;
+      const nx = -Math.sin(ang)*(w*0.32);
+      const ny =  Math.cos(ang)*(w*0.32);
+      bumps += `<line x1="${cx+nx}" y1="${cy+ny}" x2="${cx-nx}" y2="${cy-ny}" stroke="${shadow}" stroke-width="1.4" stroke-linecap="round" opacity=".55"/>`;
+    }
+  }
+  // highlight along the upper side
+  const hxOff = -Math.sin(ang) * (w*0.28);
+  const hyOff =  Math.cos(ang) * (w*0.28);
+  return `
+    <line x1="${ax}" y1="${ay}" x2="${bx}" y2="${by}" stroke="${shadow}" stroke-width="${w+4}" stroke-linecap="round"/>
+    <line x1="${ax}" y1="${ay}" x2="${bx}" y2="${by}" stroke="${col}" stroke-width="${w}" stroke-linecap="round"/>
+    <line x1="${ax+hxOff*0.3}" y1="${ay+hyOff*0.3}" x2="${bx+hxOff*0.3}" y2="${by+hyOff*0.3}"
+          stroke="${light}" stroke-width="${w*0.32}" stroke-linecap="round" opacity=".55"/>
+    ${bumps}
+  `;
+}
+
+/* A clawed hand/foot at point (x,y) facing direction `dir` (deg). nClaws = number of claws */
+function claws(x, y, dirDeg, scale=1, nClaws=3, col='var(--claw)'){
+  let out = `<g transform="translate(${x} ${y}) rotate(${dirDeg}) scale(${scale})">`;
+  const spread = 18;
+  for (let i=0;i<nClaws;i++){
+    const a = (-spread/2 + (i*(spread/(nClaws-1||1)))) * Math.PI/180;
+    const cx = Math.cos(a) * 14;
+    const cy = Math.sin(a) * 14;
+    out += `<path d="M 0 0 Q ${cx*0.6} ${cy*0.6-3}, ${cx*1.3} ${cy*1.3-1} L ${cx*1.4} ${cy*1.4+2} Q ${cx*0.7} ${cy*0.7+4}, 0 4 Z"
+              fill="var(--skin-dark)"/>
+            <path d="M ${cx*1.05} ${cy*1.05-1} L ${cx*1.7} ${cy*1.7+1} L ${cx*1.15} ${cy*1.15+3} Z"
+              fill="${col}"/>`;
+  }
+  out += `</g>`;
+  return out;
+}
+
+// ---------- Build SVG ----------
+const torso = `
+  <!-- back shadow blob -->
+  <path d="M 666 234
+           C 580 244, 504 282, 466 344
+           C 450 380, 454 414, 468 462
+           C 510 484, 580 492, 670 498
+           C 740 480, 770 440, 800 400
+           C 800 330, 770 280, 740 240
+           C 700 220, 666 234 Z"
+        fill="var(--skin-dark)"/>
+  <!-- main body (top-left chamfered along the red cut line) -->
+  <path d="M 660 244
+           C 600 252, 528 280, 484 340
+           C 472 372, 474 392, 476 415
+           C 492 460, 530 478, 588 484
+           C 670 492, 730 472, 758 436
+           C 786 398, 786 332, 758 286
+           C 728 250, 692 240, 660 244 Z"
+        fill="url(#bodyGrad)"/>
+  <!-- belly plate (removed; scute lines now sit on body skin) -->
+  <!-- belly scutes -->
+  <g stroke="var(--skin-dark)" stroke-width="1.2" fill="none" opacity=".55">
+    <path d="M 552 388 Q 640 408, 740 392"/>
+    <path d="M 552 406 Q 640 426, 744 408"/>
+    <path d="M 558 424 Q 642 444, 744 422"/>
+    <path d="M 568 440 Q 644 458, 740 436"/>
+  </g>
+  <!-- shoulder scales -->
+  <g fill="var(--skin-dark)" opacity=".55">
+    <ellipse cx="660" cy="270" rx="22" ry="10"/>
+    <ellipse cx="700" cy="288" rx="18" ry="8"/>
+    <ellipse cx="610" cy="262" rx="18" ry="9"/>
+    <ellipse cx="540" cy="294" rx="14" ry="7"/>
+    <ellipse cx="520" cy="340" rx="14" ry="7"/>
+    <ellipse cx="510" cy="384" rx="13" ry="7"/>
+  </g>
+`;
+
+// Dorsal spines following the back curve — driven by SPINE state so the
+// endpoints/arch can be dragged. Pure linear interp + sine arch.
+function spines(){
+  const arc = [];
+  const n = 15;
+  const [sx, sy] = SPINE.start, [ex, ey] = SPINE.end;
+  // perpendicular unit normal pointing "up/outward" from the straight line
+  const dx = ex - sx, dy = ey - sy;
+  const len = Math.hypot(dx, dy) || 1;
+  // Pick normal that points generally toward smaller y (upward in viewBox)
+  let nx = -dy / len, ny = dx / len;
+  if (ny > 0){ nx = -nx; ny = -ny; }
+  for (let i=0;i<n;i++){
+    const t = i/(n-1);
+    const lx = sx + dx * t;
+    const ly = sy + dy * t;
+    const off = SPINE.arch * Math.sin(Math.PI*t);
+    arc.push([lx + nx*off, ly + ny*off]);
+  }
+  let out = '';
+  for (let i=0;i<arc.length-1;i++){
+    const [x1,y1] = arc[i], [x2,y2] = arc[i+1];
+    const mx = (x1+x2)/2;
+    const my = (y1+y2)/2;
+    const sdx = x2-x1, sdy = y2-y1;
+    const slen = Math.hypot(sdx,sdy)||1;
+    const snx = -sdy/slen, sny = sdx/slen; // outward normal for spike
+    // Pick normal pointing AWAY from straight start-end line for spike height
+    let outSign = 1;
+    {
+      const towardLineX = (sx + dx*((mx-sx)*dx + (my-sy)*dy)/(len*len)) - mx;
+      const towardLineY = (sy + dy*((mx-sx)*dx + (my-sy)*dy)/(len*len)) - my;
+      if (towardLineX*snx + towardLineY*sny > 0) outSign = -1;
+    }
+    const ox = snx * outSign, oy = sny * outSign;
+    const out_x = mx + ox * (38 - i*1.3);
+    const out_y = my + oy * (38 - i*1.3);
+    const h = 36 - i*1.7;
+    out += `
+      <path d="M ${x1} ${y1} L ${out_x} ${out_y} L ${x2} ${y2} Z"
+            fill="var(--spine)" stroke="var(--skin-dark)" stroke-width="1"/>
+      <path d="M ${(x1+out_x)/2} ${(y1+out_y)/2} L ${out_x} ${out_y} L ${(x2+out_x)/2} ${(y2+out_y)/2} Z"
+            fill="var(--spine-tip)" opacity=".6"/>
+    `;
+  }
+  return out;
+}
+
+// Head (the geometry inside the neck joint group). Drawn in absolute coords;
+// the joint wrapper takes care of pivot+rotation.
+const headInner = `
+  <!-- skull base / back of head -->
+  <path d="M 700 256
+           C 690 240, 700 220, 730 215
+           C 770 210, 810 215, 845 230
+           C 890 250, 920 270, 920 290
+           C 920 310, 905 322, 885 326
+           L 820 332
+           C 800 332, 780 326, 760 318
+           C 730 308, 706 290, 700 270
+           Z"
+        fill="url(#headGrad)" stroke="var(--skin-dark)" stroke-width="1.5"/>
+  <!-- brow ridge -->
+  <path d="M 760 238 L 820 232 L 860 248 L 868 264 L 832 260 L 800 256 L 770 256 Z"
+        fill="var(--skin-dark)"/>
+  <!-- cheek scale -->
+  <path d="M 760 286 Q 800 304, 850 302" stroke="var(--skin-dark)" stroke-width="2" fill="none" opacity=".7"/>
+  <!-- upper teeth -->
+  <g fill="var(--tooth)" stroke="var(--skin-dark)" stroke-width="0.6">
+    <path d="M 800 306 L 808 320 L 816 306 Z"/>
+    <path d="M 820 306 L 826 322 L 834 306 Z"/>
+    <path d="M 842 306 L 848 320 L 856 306 Z"/>
+    <path d="M 862 304 L 868 316 L 874 304 Z"/>
+  </g>
+  <!-- mouth corner shadow -->
+  <path d="M 785 304 Q 825 312, 880 308" stroke="var(--skin-dark)" stroke-width="1.6" fill="none"/>
+  <!-- eye -->
+  <g>
+    <ellipse cx="832" cy="252" rx="13" ry="9" fill="#1a1a1a"/>
+    <ellipse cx="832" cy="252" rx="10" ry="6.5" fill="var(--eye)"/>
+    <ellipse cx="834" cy="251" rx="2.4" ry="5.5" fill="#1a1a1a"/>
+    <circle cx="830" cy="250" r="1.6" fill="#fff" opacity=".95"/>
+  </g>
+  <!-- nostril -->
+  <ellipse cx="900" cy="280" rx="4" ry="2.4" fill="var(--skin-dark)"/>
+  <!-- head spines -->
+  <g fill="var(--spine)" stroke="var(--skin-dark)" stroke-width="0.6">
+    <path d="M 725 215 L 730 196 L 742 218 Z"/>
+    <path d="M 752 210 L 760 192 L 772 214 Z"/>
+    <path d="M 778 208 L 788 192 L 796 214 Z"/>
+    <path d="M 806 210 L 818 196 L 824 218 Z"/>
+  </g>
+`;
+
+// Jaw (lower) — geometry around the jaw pivot
+const jawInner = `
+  <path d="M 800 308
+           Q 820 332, 860 336
+           Q 895 338, 910 330
+           Q 902 346, 870 352
+           Q 830 354, 808 346
+           Q 794 332, 800 308 Z"
+        fill="var(--skin-dark)"/>
+  <path d="M 800 312
+           Q 818 330, 858 332
+           Q 890 334, 906 326
+           L 906 332
+           Q 880 348, 832 348
+           Q 808 344, 800 332 Z"
+        fill="var(--skin-mid)"/>
+  <!-- lower teeth -->
+  <g fill="var(--tooth)" stroke="var(--skin-dark)" stroke-width="0.6">
+    <path d="M 815 320 L 820 308 L 828 318 Z"/>
+    <path d="M 838 326 L 846 312 L 852 324 Z"/>
+    <path d="M 862 328 L 870 314 L 876 326 Z"/>
+    <path d="M 884 326 L 892 314 L 898 322 Z"/>
+  </g>
+  <!-- jaw highlight -->
+  <path d="M 808 330 Q 850 346, 900 336" stroke="var(--skin-light)" stroke-width="1" fill="none" opacity=".4"/>
+  <!-- inner mouth glow (only visible when open) -->
+  <path d="M 802 314 Q 845 322, 905 320 L 905 324 Q 845 330, 802 318 Z"
+        fill="#ff6e4a" opacity=".75"/>
+`;
+
+// Tail — chain of 6 segments. Each segment is a thick line.
+function tailChain(){
+  // tail segment "end" positions in absolute coords (T-pose):
+  const ends = [
+    PIVOTS.tail2, PIVOTS.tail3, PIVOTS.tail4, PIVOTS.tail5, PIVOTS.tail6, [150,570]
+  ];
+  const widths = [60, 48, 38, 30, 22, 14];
+  function seg(i){
+    const id = `tail${i+1}`;
+    const [ax, ay] = PIVOTS[id];
+    const [bx, by] = ends[i];
+    const w = widths[i];
+    // small spines along the segment
+    const ang = Math.atan2(by-ay, bx-ax);
+    let s = '';
+    const len = Math.hypot(bx-ax, by-ay);
+    const nSp = Math.max(2, Math.floor(len/16));
+    for (let k=0;k<nSp;k++){
+      const t = (k+0.5)/nSp;
+      const cx = ax + (bx-ax)*t, cy = ay + (by-ay)*t;
+      const nx = -Math.sin(ang), ny = Math.cos(ang);
+      const h = w*0.42;
+      const tipx = cx + nx*h, tipy = cy + ny*h;
+      const b1x = cx + Math.cos(ang)*6, b1y = cy + Math.sin(ang)*6;
+      const b2x = cx - Math.cos(ang)*6, b2y = cy - Math.sin(ang)*6;
+      s += `<path d="M ${b1x} ${b1y} L ${tipx} ${tipy} L ${b2x} ${b2y} Z"
+              fill="var(--spine)" stroke="var(--skin-dark)" stroke-width="0.6"/>`;
+    }
+    const inner = `
+      ${limb(ax,ay,bx,by,{w, stripe:true})}
+      ${s}
+    `;
+    const next = i < 5 ? seg(i+1) : '';
+    return `<g id="jnt-${id}" class="joint" data-joint="${id}" data-px="${ax}" data-py="${ay}"
+              transform="translate(${ax} ${ay}) rotate(0)">
+              <g transform="translate(${-ax} ${-ay})">
+                ${inner}
+                ${next}
+                <circle class="pivot-dot" cx="${ax}" cy="${ay}" r="5" fill="#ff7a5a"/>
+              </g>
+            </g>`;
+  }
+  return seg(0);
+}
+
+// Arm chain (shoulder -> elbow -> wrist -> hand)
+function armChain(side){
+  const isNear = side === 'n';
+  const sh = isNear?'nShoulder':'fShoulder';
+  const el = isNear?'nElbow':'fElbow';
+  const wr = isNear?'nWrist':'fWrist';
+  const colMid   = isNear?'var(--skin-mid)'  :'#33484a';
+  const colDark  = isNear?'var(--skin-dark)' :'#1d2a2b';
+  const colLight = isNear?'var(--skin-light)':'#4a635f';
+  const [shx,shy]=PIVOTS[sh],[elx,ely]=PIVOTS[el],[wrx,wry]=PIVOTS[wr];
+  // hand tip pos (just past wrist)
+  const handTip = [wrx + 28, wry + 10];
+
+  return `
+    <g id="jnt-${sh}" class="joint" data-joint="${sh}" data-px="${shx}" data-py="${shy}"
+       transform="translate(${shx} ${shy}) rotate(0)">
+      <g transform="translate(${-shx} ${-shy})">
+        ${limb(shx,shy,elx,ely,{w:26, col:colMid, shadow:colDark, light:colLight, stripe:true})}
+        <g id="jnt-${el}" class="joint" data-joint="${el}" data-px="${elx}" data-py="${ely}"
+           transform="translate(${elx} ${ely}) rotate(0)">
+          <g transform="translate(${-elx} ${-ely})">
+            ${limb(elx,ely,wrx,wry,{w:20, col:colMid, shadow:colDark, light:colLight, stripe:true})}
+            <g id="jnt-${wr}" class="joint" data-joint="${wr}" data-px="${wrx}" data-py="${wry}"
+               transform="translate(${wrx} ${wry}) rotate(0)">
+              <g transform="translate(${-wrx} ${-wry})">
+                ${limb(wrx,wry,handTip[0],handTip[1],{w:16, col:colMid, shadow:colDark, light:colLight})}
+                ${claws(handTip[0], handTip[1], Math.atan2(handTip[1]-wry, handTip[0]-wrx)*180/Math.PI, 0.85, 3)}
+                <circle class="pivot-dot" cx="${wrx}" cy="${wry}" r="4" fill="#ff7a5a"/>
+              </g>
+            </g>
+            <circle class="pivot-dot" cx="${elx}" cy="${ely}" r="4" fill="#ff7a5a"/>
+          </g>
+        </g>
+        <circle class="pivot-dot" cx="${shx}" cy="${shy}" r="5" fill="#ff7a5a"/>
+      </g>
+    </g>`;
+}
+
+// Leg chain (hip -> knee -> ankle -> foot)
+function legChain(side){
+  const isNear = side === 'n';
+  const hp = isNear?'nHip':'fHip';
+  const kn = isNear?'nKnee':'fKnee';
+  const ak = isNear?'nAnkle':'fAnkle';
+  const colMid   = isNear?'var(--skin-mid)'  :'#33484a';
+  const colDark  = isNear?'var(--skin-dark)' :'#1d2a2b';
+  const colLight = isNear?'var(--skin-light)':'#4a635f';
+  const [hx,hy]=PIVOTS[hp],[kx,ky]=PIVOTS[kn],[ax,ay]=PIVOTS[ak];
+  const footTip = [ax + 36, ay + 6];
+
+  return `
+    <g id="jnt-${hp}" class="joint" data-joint="${hp}" data-px="${hx}" data-py="${hy}"
+       transform="translate(${hx} ${hy}) rotate(0)">
+      <g transform="translate(${-hx} ${-hy})">
+        ${limb(hx,hy,kx,ky,{w:62, col:colMid, shadow:colDark, light:colLight, stripe:true})}
+        <g id="jnt-${kn}" class="joint" data-joint="${kn}" data-px="${kx}" data-py="${ky}"
+           transform="translate(${kx} ${ky}) rotate(0)">
+          <g transform="translate(${-kx} ${-ky})">
+            ${limb(kx,ky,ax,ay,{w:44, col:colMid, shadow:colDark, light:colLight, stripe:true})}
+            <g id="jnt-${ak}" class="joint" data-joint="${ak}" data-px="${ax}" data-py="${ay}"
+               transform="translate(${ax} ${ay}) rotate(0)">
+              <g transform="translate(${-ax} ${-ay})">
+                <!-- foot main -->
+                ${limb(ax,ay,footTip[0],footTip[1],{w:30, col:colMid, shadow:colDark, light:colLight})}
+                ${claws(footTip[0], footTip[1], Math.atan2(footTip[1]-ay, footTip[0]-ax)*180/Math.PI, 1.05, 3)}
+                <circle class="pivot-dot" cx="${ax}" cy="${ay}" r="4" fill="#ff7a5a"/>
+              </g>
+            </g>
+            <circle class="pivot-dot" cx="${kx}" cy="${ky}" r="4" fill="#ff7a5a"/>
+          </g>
+        </g>
+        <circle class="pivot-dot" cx="${hx}" cy="${hy}" r="5" fill="#ff7a5a"/>
+      </g>
+    </g>`;
+}
+
+// Head = neck joint group containing head geometry + jaw subgroup
+function headChain(){
+  const [nx,ny] = PIVOTS.neck;
+  const [jx,jy] = PIVOTS.jaw;
+  return `
+    <g id="jnt-neck" class="joint" data-joint="neck" data-px="${nx}" data-py="${ny}"
+       transform="translate(${nx} ${ny}) rotate(0)">
+      <g transform="translate(${-nx} ${-ny})">
+        <!-- neck connector -->
+        <path d="M 680 260 Q 700 250, 740 248 L 740 300 Q 700 304, 680 300 Z"
+              fill="var(--skin-dark)"/>
+        ${headInner}
+        <g id="jnt-jaw" class="joint" data-joint="jaw" data-px="${jx}" data-py="${jy}"
+           transform="translate(${jx} ${jy}) rotate(0)">
+          <g transform="translate(${-jx} ${-jy})">
+            ${jawInner}
+            <circle class="pivot-dot" cx="${jx}" cy="${jy}" r="4" fill="#ff7a5a"/>
+          </g>
+        </g>
+        <circle class="pivot-dot" cx="${nx}" cy="${ny}" r="5" fill="#ff7a5a"/>
+      </g>
+    </g>`;
+}
+
+// ---------- Compose full SVG ----------
+const svgMarkup = `
+<svg class="rig" viewBox="0 0 1200 720" preserveAspectRatio="xMidYMid meet" id="rigSvg"
+     style="--skin-dark:#22332f; --skin-mid:#3b524d; --skin-light:#607a73;
+            --belly:#92a193; --belly-shadow:#5b6c5f;
+            --spine:#1a2624; --spine-tip:#5fb9c9;
+            --claw:#e6e0c8; --tooth:#efe9d3; --eye:#ffc83a;">
+  <defs>
+    <linearGradient id="bodyGrad" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#465c57"/>
+      <stop offset=".55" stop-color="#374a46"/>
+      <stop offset="1" stop-color="#243431"/>
+    </linearGradient>
+    <linearGradient id="headGrad" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#4b625c"/>
+      <stop offset="1" stop-color="#2b3e3a"/>
+    </linearGradient>
+    <radialGradient id="beamGlow" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#e8f9ff" stop-opacity="1"/>
+      <stop offset=".4" stop-color="#6ce8ff" stop-opacity=".9"/>
+      <stop offset="1" stop-color="#6ce8ff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="waterFill" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#6ce8ff" stop-opacity=".42"/>
+      <stop offset=".5" stop-color="#2a6a82" stop-opacity=".22"/>
+      <stop offset="1" stop-color="#06192a" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="6" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Shadow on ground -->
+  <ellipse cx="650" cy="650" rx="240" ry="20" fill="#000" opacity=".45" id="shadow"/>
+
+  <!-- ROOT_USER (move/scale/rotate) wraps ROOT (anim transforms) -->
+  <g id="rootUser" transform="translate(0 0)">
+  <!-- ROOT (positions the whole character) -->
+  <g id="root" transform="translate(0 0)">
+    <!-- FAR limbs (behind body) -->
+    ${legChain('f')}
+    ${armChain('f')}
+
+    <!-- TAIL behind body too -->
+    ${tailChain()}
+
+    <!-- BODY -->
+    <g id="body">
+      ${torso}
+      <g id="spinesContainer" class="spines">${spines()}</g>
+    </g>
+
+    <!-- HEAD (with jaw) -->
+    ${headChain()}
+
+      <!-- NEAR limbs (in front of body) -->
+    ${legChain('n')}
+    ${armChain('n')}
+
+    <!-- Spine edit handles (move/stretch the dorsal arc) -->
+    <g id="spineHandles" pointer-events="all">
+      <line id="h-spine-line" stroke="#ffc83a" stroke-width="1" stroke-dasharray="3 3" opacity=".4"/>
+      <circle id="h-spine-start" data-spinehandle="start" r="9"
+              fill="rgba(255,200,58,.22)" stroke="#ffc83a" stroke-width="1.8"
+              style="cursor:grab"/>
+      <circle id="h-spine-end"   data-spinehandle="end"   r="9"
+              fill="rgba(255,200,58,.22)" stroke="#ffc83a" stroke-width="1.8"
+              style="cursor:grab"/>
+      <circle id="h-spine-arch"  data-spinehandle="arch"  r="7"
+              fill="rgba(108,232,255,.22)" stroke="#6ce8ff" stroke-width="1.6"
+              style="cursor:grab"/>
+    </g>
+  </g>
+  </g>
+
+  <!-- Root manipulation handles (outside rootUser so they don't scale/rotate) -->
+  <g id="rootHandles" pointer-events="all">
+    <g id="h-move" data-roothandle="move" style="cursor:move">
+      <circle r="22" fill="rgba(108,232,255,.10)" stroke="#6ce8ff" stroke-width="2"/>
+      <path d="M -11 0 L 11 0 M 0 -11 L 0 11" stroke="#6ce8ff" stroke-width="2" stroke-linecap="round"/>
+      <path d="M -7 -4 L -11 0 L -7 4 M 7 -4 L 11 0 L 7 4 M -4 -7 L 0 -11 L 4 -7 M -4 7 L 0 11 L 4 7"
+            fill="none" stroke="#6ce8ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+    <g id="h-rotate" data-roothandle="rotate" style="cursor:grab">
+      <circle r="18" fill="rgba(255,200,58,.10)" stroke="#ffc83a" stroke-width="2"/>
+      <path d="M -8 -3 A 9 9 0 1 1 -3 8" fill="none" stroke="#ffc83a" stroke-width="2" stroke-linecap="round"/>
+      <path d="M -11 -4 L -8 -3 L -7 -7" fill="none" stroke="#ffc83a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+    <g id="h-scale" data-roothandle="scale" style="cursor:nwse-resize">
+      <circle r="18" fill="rgba(255,122,90,.10)" stroke="#ff7a5a" stroke-width="2"/>
+      <path d="M -8 -8 L 8 8 M -8 -8 L -8 -3 M -8 -8 L -3 -8 M 8 8 L 8 3 M 8 8 L 3 8"
+            fill="none" stroke="#ff7a5a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+    <g id="h-reset" data-roothandle="reset" style="cursor:pointer">
+      <circle r="15" fill="rgba(180,200,200,.10)" stroke="#8aa39c" stroke-width="1.6"/>
+      <path d="M -6 -2 A 6 6 0 1 1 -3 5" fill="none" stroke="#cfd9d4" stroke-width="1.6" stroke-linecap="round"/>
+      <path d="M -9 -3 L -6 -2 L -5 -6" fill="none" stroke="#cfd9d4" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </g>
+
+  <!-- Water layer (swim mode) -->
+  <g id="waterLayer" style="display:none" pointer-events="none">
+    <path id="waveFill" d="" fill="url(#waterFill)"/>
+    <path id="waveLine" d="" fill="none" stroke="#9ff0ff" stroke-width="2" opacity=".6"/>
+    <path id="waveLine2" d="" fill="none" stroke="#6ce8ff" stroke-width="1.4" opacity=".35"/>
+    <g id="bubbles"></g>
+  </g>
+
+  <!-- Atomic breath beam, drawn last -->
+  <g class="beam-layer" id="beam" style="display:none">
+    <path id="beamPath" d="" fill="url(#beamGlow)" filter="url(#glow)"/>
+    <g id="beamParticles"></g>
+  </g>
+</svg>
+`;
+
+document.getElementById('stage').insertAdjacentHTML('beforeend', svgMarkup);
+
+// ---------- Build sliders ----------
+const slidersHost = document.getElementById('sliders');
+let slidersHTML = '';
+GROUPS.forEach(g => {
+  slidersHTML += `<div class="group"><h3 class="group-title"><span>${g.name}</span></h3>`;
+  g.joints.forEach(([id,label,min,max])=>{
+    slidersHTML += `<div class="slider">
+      <label for="sl-${id}">${label}</label>
+      <input type="range" id="sl-${id}" min="${min}" max="${max}" step="1" value="${POSE[id]||0}" data-joint="${id}"/>
+      <div class="val" id="val-${id}">${Math.round(POSE[id]||0)}°</div>
+    </div>`;
+  });
+  slidersHTML += `</div>`;
+});
+slidersHost.innerHTML = slidersHTML;
+
+// ---------- Apply / update functions ----------
+function setAngle(joint, angle){
+  POSE[joint] = angle;
+  const g = document.getElementById('jnt-'+joint);
+  if (!g) return;
+  const px = +g.dataset.px, py = +g.dataset.py;
+  const applied = INVERT_JOINTS.has(joint) ? -angle : angle;
+  g.setAttribute('transform', `translate(${px} ${py}) rotate(${applied})`);
+  const sl = document.getElementById('sl-'+joint);
+  const vl = document.getElementById('val-'+joint);
+  if (sl) sl.value = angle;
+  if (vl) vl.textContent = Math.round(angle)+'°';
+}
+function applyPose(pose, animate=false){
+  const keys = Object.keys(pose);
+  if (!animate){
+    keys.forEach(k => setAngle(k, pose[k]));
+    return;
+  }
+  // tween from current to target over 400ms
+  const start = {}; keys.forEach(k => start[k] = POSE[k]||0);
+  const t0 = performance.now();
+  const dur = 380;
+  function step(t){
+    const u = Math.min(1, (t-t0)/dur);
+    const e = 1 - Math.pow(1-u, 3); // easeOutCubic
+    keys.forEach(k => setAngle(k, start[k] + (pose[k]-start[k])*e));
+    if (u < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+applyPose(POSE);
+
+// ---------- Root transform (user-level move / scale / rotate) ----------
+const ROOT = { x: 0, y: 0, rot: 0, scale: 1 };
+const ROOT_CENTER = [615, 400];           // viewBox center the character pivots around
+const HANDLE_OFFSET = [0, 270];           // toolbar below the feet
+function applyRoot(){
+  const [cx, cy] = ROOT_CENTER;
+  const ru = document.getElementById('rootUser');
+  ru.setAttribute('transform',
+    `translate(${ROOT.x} ${ROOT.y}) ` +
+    `translate(${cx} ${cy}) rotate(${ROOT.rot}) scale(${ROOT.scale}) translate(${-cx} ${-cy})`);
+  // Position the handle toolbar at a fixed offset from the character center,
+  // following translation only (so the handles don't scale/rotate with it).
+  const ax = cx + ROOT.x + HANDLE_OFFSET[0];
+  const ay = cy + ROOT.y + HANDLE_OFFSET[1];
+  document.getElementById('h-move'  ).setAttribute('transform', `translate(${ax - 80} ${ay})`);
+  document.getElementById('h-rotate').setAttribute('transform', `translate(${ax - 24} ${ay})`);
+  document.getElementById('h-scale' ).setAttribute('transform', `translate(${ax + 24} ${ay})`);
+  document.getElementById('h-reset' ).setAttribute('transform', `translate(${ax + 70} ${ay})`);
+}
+applyRoot();
+
+// ---------- Spine arc editing ----------
+function rebuildSpines(){
+  const c = document.getElementById('spinesContainer');
+  if (c) c.innerHTML = spines();
+}
+function updateSpineHandles(){
+  const [sx, sy] = SPINE.start, [ex, ey] = SPINE.end;
+  const hs = document.getElementById('h-spine-start');
+  const he = document.getElementById('h-spine-end');
+  const ha = document.getElementById('h-spine-arch');
+  const ln = document.getElementById('h-spine-line');
+  hs.setAttribute('cx', sx); hs.setAttribute('cy', sy);
+  he.setAttribute('cx', ex); he.setAttribute('cy', ey);
+  const mx = (sx+ex)/2, my = (sy+ey)/2;
+  const dx = ex - sx, dy = ey - sy;
+  const len = Math.hypot(dx, dy) || 1;
+  let nx = -dy/len, ny = dx/len;
+  if (ny > 0){ nx = -nx; ny = -ny; }
+  ha.setAttribute('cx', mx + nx*SPINE.arch);
+  ha.setAttribute('cy', my + ny*SPINE.arch);
+  ln.setAttribute('x1', sx); ln.setAttribute('y1', sy);
+  ln.setAttribute('x2', ex); ln.setAttribute('y2', ey);
+}
+updateSpineHandles();
+let spineDragState = null;
+
+// ---------- Spine save/load ----------
+const SPINE_KEY = 'godzilla-spine-shape-v1';
+function saveSpine(){
+  try {
+    localStorage.setItem(SPINE_KEY, JSON.stringify(SPINE));
+    const b = document.getElementById('btn-saveSpine');
+    if (b){
+      const orig = b.textContent;
+      b.textContent = '✓ Saved';
+      clearTimeout(b._t);
+      b._t = setTimeout(()=>{ b.textContent = orig; }, 1200);
+    }
+  } catch(_){}
+}
+function loadSpine(){
+  try {
+    const raw = localStorage.getItem(SPINE_KEY);
+    if (!raw) return;
+    const d = JSON.parse(raw);
+    if (Array.isArray(d.start)) SPINE.start = d.start;
+    if (Array.isArray(d.end))   SPINE.end   = d.end;
+    if (typeof d.arch === 'number') SPINE.arch = d.arch;
+    rebuildSpines();
+    updateSpineHandles();
+  } catch(_){}
+}
+function resetSpine(){
+  try { localStorage.removeItem(SPINE_KEY); } catch(_){}
+  SPINE.start = [648, 246];
+  SPINE.end   = [480, 374];
+  SPINE.arch  = 24;
+  rebuildSpines();
+  updateSpineHandles();
+}
+loadSpine();
+document.getElementById('btn-saveSpine')?.addEventListener('click', saveSpine);
+document.getElementById('btn-resetSpine')?.addEventListener('click', resetSpine);
+
+// Drag handlers for root manipulation. Hooked into the same pointer listeners
+// the joint drag uses — captured BEFORE the joint check by data-roothandle.
+let rootDragState = null;
+function vbScale(){
+  const rect = svgEl.getBoundingClientRect();
+  const vb = svgEl.viewBox.baseVal;
+  return { sx: vb.width / rect.width, sy: vb.height / rect.height,
+           cxScreen: rect.left + rect.width/2, cyScreen: rect.top + rect.height/2 };
+}
+
+// ---------- Slider input handlers ----------
+slidersHost.addEventListener('input', e => {
+  const sl = e.target.closest('input[type=range]');
+  if (!sl) return;
+  setAngle(sl.dataset.joint, +sl.value);
+});
+
+// ---------- Drag-rotate joints ----------
+const svgEl = document.getElementById('rigSvg');
+let dragState = null;
+
+svgEl.addEventListener('pointerdown', e => {
+  // Root manipulation handles take priority.
+  const rh = e.target.closest('[data-roothandle]');
+  if (rh){
+    const kind = rh.dataset.roothandle;
+    if (kind === 'reset'){
+      ROOT.x = 0; ROOT.y = 0; ROOT.rot = 0; ROOT.scale = 1; applyRoot();
+      e.preventDefault();
+      return;
+    }
+    const { sx, sy, cxScreen, cyScreen } = vbScale();
+    rootDragState = {
+      kind,
+      startCX: e.clientX, startCY: e.clientY,
+      startROOT: {...ROOT},
+      sx, sy, cxScreen, cyScreen,
+    };
+    svgEl.classList.add('dragging');
+    svgEl.setPointerCapture(e.pointerId);
+    e.preventDefault();
+    return;
+  }
+  // Spine handle drag.
+  const sh = e.target.closest('[data-spinehandle]');
+  if (sh){
+    const ru = document.getElementById('root'); // root-local space = SPINE coord frame
+    const inv = ru.getScreenCTM().inverse();
+    const pt = svgEl.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+    const local = pt.matrixTransform(inv);
+    spineDragState = {
+      kind: sh.dataset.spinehandle,
+      startLocal: { x: local.x, y: local.y },
+      startSpine: { start: [...SPINE.start], end: [...SPINE.end], arch: SPINE.arch },
+      inv,
+    };
+    svgEl.classList.add('dragging');
+    svgEl.setPointerCapture(e.pointerId);
+    e.preventDefault();
+    return;
+  }
+  const target = e.target.closest('[data-joint]');
+  if (!target) return;
+  // walk inner-most joint (closest data-joint to target) — already correct via closest()
+  const joint = target.dataset.joint;
+  // get pivot in screen coords: the joint group's local (0,0) === pivot.
+  const ctm = target.getScreenCTM();
+  const pivotSX = ctm.e;
+  const pivotSY = ctm.f;
+  const startMouseA = Math.atan2(e.clientY - pivotSY, e.clientX - pivotSX);
+  const startAngle = POSE[joint] || 0;
+  dragState = { joint, pivotSX, pivotSY, startMouseA, startAngle, el: target };
+  svgEl.classList.add('dragging');
+  svgEl.setPointerCapture(e.pointerId);
+  e.preventDefault();
+});
+
+svgEl.addEventListener('pointermove', e => {
+  if (rootDragState){
+    const { kind, startCX, startCY, startROOT, sx, sy } = rootDragState;
+    const dx = (e.clientX - startCX) * sx;
+    const dy = (e.clientY - startCY) * sy;
+    if (kind === 'move'){
+      ROOT.x = startROOT.x + dx;
+      ROOT.y = startROOT.y + dy;
+    } else if (kind === 'scale'){
+      // Vertical drag scales (down = bigger, clamped 0.3–3×).
+      const f = 1 + dy / 220;
+      ROOT.scale = Math.max(0.3, Math.min(3, startROOT.scale * f));
+    } else if (kind === 'rotate'){
+      // Horizontal drag rotates (1° per ~2.5px).
+      ROOT.rot = startROOT.rot + (e.clientX - startCX) * 0.4;
+    }
+    applyRoot();
+    return;
+  }
+  if (spineDragState){
+    const { kind, startLocal, startSpine, inv } = spineDragState;
+    const pt = svgEl.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+    const local = pt.matrixTransform(inv);
+    const ddx = local.x - startLocal.x, ddy = local.y - startLocal.y;
+    if (kind === 'start'){
+      SPINE.start = [startSpine.start[0] + ddx, startSpine.start[1] + ddy];
+    } else if (kind === 'end'){
+      SPINE.end = [startSpine.end[0] + ddx, startSpine.end[1] + ddy];
+    } else if (kind === 'arch'){
+      // Drag along the perpendicular to the spine axis; component along normal
+      // controls arch amount.
+      const [sx0, sy0] = startSpine.start, [ex0, ey0] = startSpine.end;
+      const ax = ex0 - sx0, ay = ey0 - sy0;
+      const alen = Math.hypot(ax, ay) || 1;
+      let nx = -ay/alen, ny = ax/alen;
+      if (ny > 0){ nx = -nx; ny = -ny; }
+      const proj = ddx*nx + ddy*ny;
+      SPINE.arch = Math.max(0, Math.min(120, startSpine.arch + proj));
+    }
+    rebuildSpines();
+    updateSpineHandles();
+    return;
+  }
+  if (!dragState) return;
+  const a = Math.atan2(e.clientY - dragState.pivotSY, e.clientX - dragState.pivotSX);
+  let delta = (a - dragState.startMouseA) * 180/Math.PI;
+  // For inverted joints (elbow), flip mouse delta so the slider tracks
+  // the opposite sign but the visual still follows the mouse direction.
+  if (INVERT_JOINTS.has(dragState.joint)) delta = -delta;
+  let newAngle = dragState.startAngle + delta;
+  // clamp into slider range if defined
+  const sl = document.getElementById('sl-'+dragState.joint);
+  if (sl){
+    const mn = +sl.min, mx = +sl.max;
+    newAngle = Math.max(mn, Math.min(mx, newAngle));
+  }
+  setAngle(dragState.joint, newAngle);
+});
+
+function endDrag(e){
+  if (rootDragState){
+    try { svgEl.releasePointerCapture(e.pointerId); } catch(_) {}
+    rootDragState = null;
+    svgEl.classList.remove('dragging');
+    return;
+  }
+  if (spineDragState){
+    try { svgEl.releasePointerCapture(e.pointerId); } catch(_) {}
+    spineDragState = null;
+    svgEl.classList.remove('dragging');
+    return;
+  }
+  if (!dragState) return;
+  try { svgEl.releasePointerCapture(e.pointerId); } catch(_) {}
+  dragState = null;
+  svgEl.classList.remove('dragging');
+}
+svgEl.addEventListener('pointerup', endDrag);
+svgEl.addEventListener('pointercancel', endDrag);
+
+// ---------- Preset buttons ----------
+document.querySelectorAll('[data-pose]').forEach(b => {
+  b.addEventListener('click', () => {
+    stopWalk();
+    stopSwim();
+    applyPose(POSES[b.dataset.pose], true);
+  });
+});
+
+// ---------- Walk cycle ----------
+let walkRAF = null;
+function startWalk(){
+  if (walkRAF) return;
+  const t0 = performance.now();
+  const loop = (t) => {
+    const phase = ((t-t0)/650) % 1;
+    const s = Math.sin(phase * Math.PI*2);
+    const c = Math.cos(phase * Math.PI*2);
+    setAngle('nHip',  -18*s);
+    setAngle('nKnee',  Math.max(0, -28*s));
+    setAngle('nAnkle', 12*s);
+    setAngle('fHip',   18*s);
+    setAngle('fKnee',  Math.max(0, 28*s));
+    setAngle('fAnkle', -12*s);
+    setAngle('nShoulder', 18 + 14*s);
+    setAngle('fShoulder', 22 - 14*s);
+    setAngle('nElbow', 70 + 10*c);
+    setAngle('fElbow', 75 - 10*c);
+    setAngle('nWrist', 30 + 6*s);
+    setAngle('fWrist', 28 - 6*s);
+    setAngle('tail1', -8 + 6*Math.sin(phase*Math.PI*2 + .4));
+    setAngle('tail2', -10 + 8*Math.sin(phase*Math.PI*2 + .8));
+    setAngle('tail3', -14 + 10*Math.sin(phase*Math.PI*2 + 1.2));
+    setAngle('tail4', -18 + 12*Math.sin(phase*Math.PI*2 + 1.6));
+    setAngle('tail5', -22 + 14*Math.sin(phase*Math.PI*2 + 2.0));
+    setAngle('tail6', -26 + 16*Math.sin(phase*Math.PI*2 + 2.4));
+    setAngle('neck', -1*s);
+    // little body bob
+    const r = document.getElementById('root');
+    r.setAttribute('transform', `translate(0 ${-3*Math.abs(s)})`);
+    walkRAF = requestAnimationFrame(loop);
+  };
+  walkRAF = requestAnimationFrame(loop);
+  document.getElementById('btn-animate').textContent = '■ Stop';
+}
+function stopWalk(){
+  if (!walkRAF) return;
+  cancelAnimationFrame(walkRAF);
+  walkRAF = null;
+  document.getElementById('root').setAttribute('transform','translate(0 0)');
+  document.getElementById('btn-animate').textContent = '▶ Walk cycle';
+}
+document.getElementById('btn-animate').addEventListener('click', () => {
+  if (walkRAF) stopWalk(); else { applyPose(POSES.walk, true); setTimeout(startWalk, 380); }
+});
+
+// ---------- Atomic breath ----------
+const beam = document.getElementById('beam');
+const beamPath = document.getElementById('beamPath');
+const beamParticles = document.getElementById('beamParticles');
+let breathRAF = null;
+function fireBreath(){
+  // First, open the jaw + tilt head up
+  stopWalk();
+  applyPose({
+    ...POSE,
+    neck: -8, jaw: 52,
+    fShoulder: 8,  fElbow: 88, fWrist: 18,
+    nShoulder: 4,  nElbow: 94, nWrist: 14,
+    tail1: -16, tail2: -20, tail3: -24, tail4: -26, tail5: -28, tail6: -30,
+  }, true);
+  setTimeout(()=>{
+    beam.style.display = '';
+    const t0 = performance.now();
+    // open-mouth center in head local (= absolute T-pose) coords
+    const mouthLocal = [918, 352];
+    // Compute mouth position + direction in viewBox space WITHOUT getCTM(), which
+    // browsers now return in screen pixels (SVG2 spec) — that would put the path
+    // at wrong viewBox coords when the SVG is letterboxed by preserveAspectRatio.
+    function getMouthVB(){
+      const th = (POSE.neck || 0) * Math.PI / 180;
+      const [npx, npy] = PIVOTS.neck;
+      const dx = mouthLocal[0] - npx, dy = mouthLocal[1] - npy;
+      return {
+        x: npx + dx*Math.cos(th) - dy*Math.sin(th),
+        y: npy + dx*Math.sin(th) + dy*Math.cos(th),
+        ang: th
+      };
+    }
+    const loop = (t) => {
+      const u = Math.min(1, (t-t0)/1100);
+      const mInfo = getMouthVB();
+      const mp = { x: mInfo.x, y: mInfo.y };
+      // beam shape: cone from mouth going right with wave
+      const len = 540 * (0.4 + 0.6*Math.min(1, u*2));
+      const ang = mInfo.ang; // beam direction follows head rotation
+      const c = Math.cos(ang), s = Math.sin(ang);
+      const w1 = 18 + Math.sin(t*0.02)*3;
+      const w2 = 90 + Math.sin(t*0.012)*10;
+      const x0 = mp.x, y0 = mp.y;
+      const tx = x0 + c*len, ty = y0 + s*len;
+      // perpendicular
+      const px1 = -s, py1 = c;
+      const p0a = [x0 + px1*w1, y0 + py1*w1];
+      const p0b = [x0 - px1*w1, y0 - py1*w1];
+      const p1a = [tx + px1*w2, ty + py1*w2];
+      const p1b = [tx - px1*w2, ty - py1*w2];
+      beamPath.setAttribute('d',
+        `M ${p0a[0]} ${p0a[1]} Q ${(x0+tx)/2} ${(y0+ty)/2 - w2*0.2}, ${p1a[0]} ${p1a[1]}
+         L ${p1b[0]} ${p1b[1]} Q ${(x0+tx)/2} ${(y0+ty)/2 + w2*0.2}, ${p0b[0]} ${p0b[1]} Z`);
+      // sparks
+      if (Math.random() < 0.6){
+        const tt = Math.random();
+        const cx = x0 + c*len*tt + (Math.random()-0.5)*30;
+        const cy = y0 + s*len*tt + (Math.random()-0.5)*30;
+        const sp = document.createElementNS('http://www.w3.org/2000/svg','circle');
+        sp.setAttribute('cx',cx); sp.setAttribute('cy',cy);
+        sp.setAttribute('r', 1.6+Math.random()*2.5);
+        sp.setAttribute('fill','#cff7ff');
+        sp.style.opacity = '1';
+        beamParticles.appendChild(sp);
+        let life = 0;
+        const tick = () => {
+          life += 16;
+          sp.setAttribute('cy', +sp.getAttribute('cy') - 0.8);
+          sp.style.opacity = String(1 - life/520);
+          if (life < 520) requestAnimationFrame(tick); else sp.remove();
+        };
+        tick();
+      }
+      if (u < 1) breathRAF = requestAnimationFrame(loop);
+      else {
+        // fade out
+        beamPath.style.transition = 'opacity .35s';
+        beamPath.style.opacity = '0';
+        setTimeout(()=>{
+          beam.style.display = 'none';
+          beamPath.style.opacity = '1';
+          beamPath.style.transition = '';
+          beamParticles.innerHTML = '';
+          applyPose(POSES.idle, true);
+        }, 380);
+      }
+    };
+    breathRAF = requestAnimationFrame(loop);
+  }, 420);
+}
+document.getElementById('btn-breath').addEventListener('click', () => { stopSwim(); fireBreath(); });
+
+// ---------- Swim mode ----------
+let swimRAF = null;
+const BODY_PIVOT_X = 615, BODY_PIVOT_Y = 400;
+
+function spawnBubble(){
+  const bubbles = document.getElementById('bubbles');
+  const b = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  const x = 380 + Math.random()*420;
+  const y = 340 + Math.random()*220;
+  const r = 2 + Math.random()*5;
+  b.setAttribute('cx', x);
+  b.setAttribute('cy', y);
+  b.setAttribute('r', r);
+  b.setAttribute('fill','none');
+  b.setAttribute('stroke','#cff7ff');
+  b.setAttribute('stroke-width','1.2');
+  b.setAttribute('opacity','.65');
+  bubbles.appendChild(b);
+  const t0 = performance.now();
+  const dur = 1800 + Math.random()*1700;
+  const driftAmp = (Math.random()-0.5)*40;
+  const startY = y;
+  const tick = (t) => {
+    if (!swimRAF){ b.remove(); return; }
+    const u = (t - t0)/dur;
+    if (u >= 1) { b.remove(); return; }
+    const ny = startY - u*(startY - 80);
+    const nx = x + Math.sin(u*Math.PI*2)*driftAmp*u;
+    b.setAttribute('cy', ny);
+    b.setAttribute('cx', nx);
+    b.setAttribute('opacity', 0.7*(1-u*u));
+    b.setAttribute('r', r*(1 + u*0.4));
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+
+function startSwim(){
+  if (swimRAF) return;
+  stopWalk();
+  document.getElementById('stage').classList.add('underwater');
+  document.getElementById('waterLayer').style.display = '';
+  const root = document.getElementById('root');
+  const waveLine  = document.getElementById('waveLine');
+  const waveLine2 = document.getElementById('waveLine2');
+  const waveFill  = document.getElementById('waveFill');
+  const t0 = performance.now();
+  let lastBubble = 0;
+  const loop = (t) => {
+    const elapsed = t - t0;
+    const phase = (elapsed/950) % 1;
+    const tau = phase * Math.PI*2;
+    // Body tilts into a dive, with a subtle bob along the swim direction
+    const tilt = 28 + Math.sin(tau)*3.5;
+    const bobX = Math.sin(tau)*6;
+    const bobY = Math.cos(tau)*4;
+    root.setAttribute('transform', `translate(${bobX} ${bobY}) rotate(${tilt} ${BODY_PIVOT_X} ${BODY_PIVOT_Y})`);
+    // Tail — traveling wave (main propulsion)
+    setAngle('tail1', 18*Math.sin(tau));
+    setAngle('tail2', 24*Math.sin(tau + .55));
+    setAngle('tail3', 30*Math.sin(tau + 1.10));
+    setAngle('tail4', 34*Math.sin(tau + 1.70));
+    setAngle('tail5', 38*Math.sin(tau + 2.30));
+    setAngle('tail6', 42*Math.sin(tau + 2.90));
+    // Legs trail behind, gentle kicks (out of phase)
+    setAngle('nHip',  -48 + 8*Math.sin(tau));
+    setAngle('nKnee',  28 + 12*Math.sin(tau + .6));
+    setAngle('nAnkle',-14 + 6*Math.sin(tau + 1.2));
+    setAngle('fHip',  -52 - 8*Math.sin(tau));
+    setAngle('fKnee',  32 - 12*Math.sin(tau + .6));
+    setAngle('fAnkle',-14 - 6*Math.sin(tau + 1.2));
+    // Arms paddle (sweep forward & back through the water)
+    setAngle('nShoulder',  -5 + 45*Math.sin(tau));
+    setAngle('nElbow',     70 + 28*Math.cos(tau));
+    setAngle('nWrist',     22 + 16*Math.sin(tau + 1));
+    setAngle('fShoulder', -10 - 45*Math.sin(tau));
+    setAngle('fElbow',     75 - 28*Math.cos(tau));
+    setAngle('fWrist',     20 - 16*Math.sin(tau + 1));
+    // Head & jaw
+    setAngle('neck', -12 + 5*Math.sin(tau));
+    setAngle('jaw',   6 + 4*Math.sin(tau*2));
+    // Surface waves (drawn at top of viewBox)
+    const baseY = 90;
+    let d1 = `M 0 ${baseY + Math.sin(elapsed*0.0028)*8}`;
+    let d2 = `M 0 ${baseY + 14 + Math.cos(elapsed*0.0021)*6}`;
+    for (let x=20; x<=1200; x+=20){
+      const y1 = baseY + Math.sin(elapsed*0.0028 + x*0.014)*10 + Math.sin(elapsed*0.0045 + x*0.03)*4;
+      const y2 = baseY + 18 + Math.cos(elapsed*0.0021 + x*0.011)*8 + Math.sin(elapsed*0.0038 + x*0.025)*3;
+      d1 += ` L ${x} ${y1}`;
+      d2 += ` L ${x} ${y2}`;
+    }
+    waveLine.setAttribute('d', d1);
+    waveLine2.setAttribute('d', d2);
+    waveFill.setAttribute('d', d1 + ' L 1200 0 L 0 0 Z');
+    // Bubble emission (~throttled)
+    if (elapsed - lastBubble > 90){
+      lastBubble = elapsed;
+      if (Math.random() < 0.85) spawnBubble();
+    }
+    swimRAF = requestAnimationFrame(loop);
+  };
+  swimRAF = requestAnimationFrame(loop);
+  document.getElementById('btn-swim').textContent = '■ Surface';
+}
+
+function stopSwim(){
+  if (!swimRAF) return;
+  cancelAnimationFrame(swimRAF);
+  swimRAF = null;
+  document.getElementById('waterLayer').style.display = 'none';
+  document.getElementById('bubbles').innerHTML = '';
+  document.getElementById('stage').classList.remove('underwater');
+  document.getElementById('root').setAttribute('transform','translate(0 0)');
+  document.getElementById('btn-swim').textContent = '🌊 Swim mode';
+  applyPose(POSES.idle, true);
+}
+
+document.getElementById('btn-swim').addEventListener('click', () => {
+  if (swimRAF) stopSwim(); else startSwim();
+});
+
+// ---------- Toggles ----------
+document.getElementById('tg-pivots').addEventListener('change', e => {
+  document.body.classList.toggle('show-pivots', e.target.checked);
+});
+document.getElementById('tg-bones').addEventListener('change', e => {
+  svgEl.style.opacity = e.target.checked ? '0.35' : '1';
+  if (e.target.checked){
+    drawBones();
+  } else {
+    const b = document.getElementById('boneLayer'); if (b) b.remove();
+  }
+});
+function drawBones(){
+  let b = document.getElementById('boneLayer');
+  if (b) b.remove();
+  b = document.createElementNS('http://www.w3.org/2000/svg','g');
+  b.id = 'boneLayer';
+  b.style.pointerEvents = 'none';
+  svgEl.appendChild(b);
+  // Draw a line for each joint chain segment
+  function bone(fromId, toId){
+    const a = getJointWorld(fromId);
+    const c = getJointWorld(toId);
+    if (!a || !c) return;
+    const ln = document.createElementNS('http://www.w3.org/2000/svg','line');
+    ln.setAttribute('x1', a.x); ln.setAttribute('y1', a.y);
+    ln.setAttribute('x2', c.x); ln.setAttribute('y2', c.y);
+    ln.setAttribute('stroke', '#6ce8ff'); ln.setAttribute('stroke-width','2');
+    ln.setAttribute('stroke-linecap','round');
+    b.appendChild(ln);
+    [[a.x,a.y],[c.x,c.y]].forEach(([x,y])=>{
+      const dot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      dot.setAttribute('cx',x); dot.setAttribute('cy',y); dot.setAttribute('r',4);
+      dot.setAttribute('fill','#ffc83a'); b.appendChild(dot);
+    });
+  }
+  ['nShoulder->nElbow','nElbow->nWrist','fShoulder->fElbow','fElbow->fWrist',
+   'nHip->nKnee','nKnee->nAnkle','fHip->fKnee','fKnee->fAnkle',
+   'neck->jaw',
+   'tail1->tail2','tail2->tail3','tail3->tail4','tail4->tail5','tail5->tail6'
+  ].forEach(p => { const [a,c] = p.split('->'); bone(a,c); });
+}
+
+// keep bones layer in sync when xray on
+const observer = new MutationObserver(()=>{
+  if (document.getElementById('tg-bones').checked) drawBones();
+});
+observer.observe(svgEl, {attributes:true, subtree:true, attributeFilter:['transform']});
+
+// ---------- Keyboard ----------
+window.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  if (e.key.toLowerCase() === 'r') { stopWalk(); stopSwim(); applyPose(POSES.idle, true); }
+  else if (e.key.toLowerCase() === 'b') { stopSwim(); fireBreath(); }
+  else if (e.key.toLowerCase() === 's') { if (swimRAF) stopSwim(); else startSwim(); }
+  else if (e.code === 'Space') { e.preventDefault();
+    stopSwim();
+    if (walkRAF) stopWalk(); else { applyPose(POSES.walk, true); setTimeout(startWalk,380); }
+  }
+});
+
+// ---------- Idle breathing (very subtle) ----------
+const idleT0 = performance.now();
+(function idleBreath(){
+  if (!walkRAF && !breathRAF){
+    const t = (performance.now() - idleT0)/1000;
+    const s = Math.sin(t*1.6) * 0.6;
+    // only nudge if user hasn't directly grabbed
+    if (!dragState){
+      // mild neck/tail breathing only if pose hasn't been radically overridden
+      // skip for now to avoid fighting user
+    }
+  }
+  requestAnimationFrame(idleBreath);
+})();
+
+</script>
+</body>
+</html>

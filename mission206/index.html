@@ -172,7 +172,7 @@
   /* Submarine (fixed position on screen) */
   .submarine {
     position: absolute;
-    width: 90px; height: 110px;
+    width: 81px; height: 99px;
     left: 60%;
     top: 32%;
     z-index: 5;
@@ -214,12 +214,13 @@
   /* Chasing godzilla */
   .chase-godzilla {
     position: absolute;
-    width: 180px; height: 180px;
+    width: 210px; height: 120px;
     top: 32%;
     transform: translateY(-50%);
     z-index: 6;
     transition: left 0.4s ease-out;
     filter: drop-shadow(0 6px 12px rgba(0,0,0,0.4));
+    overflow: visible;
   }
   .chase-godzilla.lunge { animation: lunge 0.5s ease-in; }
   @keyframes lunge {
@@ -800,8 +801,8 @@
     .hint { font-size: 11px; margin-bottom: 4px; }
     .answers-grid { gap: 6px; }
     .answer-btn { font-size: 20px; padding: 6px 0; box-shadow: 0 3px 0 #013A63; }
-    .submarine { width: 70px; height: 86px; }
-    .chase-godzilla { width: 144px; height: 144px; }
+    .submarine { width: 63px; height: 77px; }
+    .chase-godzilla { width: 170px; height: 96px; }
     .helpers { bottom: 220px; }
   }
 </style>
@@ -863,96 +864,464 @@
     <circle cx="50" cy="22" r="5" fill="#FFD93D" stroke="#3E2723" stroke-width="1.5"/>
   </svg>
 
-  <svg class="chase-godzilla" id="chaseGodzilla" viewBox="0 0 200 200" style="left: -150px;">
+  <svg class="chase-godzilla" viewBox="23.27179718017578 136.35227966308594 934.5230102539062 523.7185668945312" preserveAspectRatio="xMidYMid meet" id="chaseGodzilla" style="left: -150px; --skin-dark:#22332f; --skin-mid:#3b524d; --skin-light:#607a73;
+              --belly:#92a193; --belly-shadow:#5b6c5f;
+              --spine:#1a2624; --spine-tip:#5fb9c9;
+              --claw:#e6e0c8; --tooth:#efe9d3; --eye:#ffc83a;">
     <defs>
-      <radialGradient id="spineGlow" cx="50%" cy="60%" r="60%">
-        <stop offset="0%" stop-color="#E0F7FA"/>
-        <stop offset="55%" stop-color="#18FFFF"/>
-        <stop offset="100%" stop-color="#00838F"/>
+      <linearGradient id="bodyGrad" x1="0" x2="0" y1="0" y2="1">
+        <stop offset="0" stop-color="#465c57"></stop>
+        <stop offset=".55" stop-color="#374a46"></stop>
+        <stop offset="1" stop-color="#243431"></stop>
+      </linearGradient>
+      <linearGradient id="headGrad" x1="0" x2="0" y1="0" y2="1">
+        <stop offset="0" stop-color="#4b625c"></stop>
+        <stop offset="1" stop-color="#2b3e3a"></stop>
+      </linearGradient>
+      <radialGradient id="beamGlow" cx=".5" cy=".5" r=".5">
+        <stop offset="0" stop-color="#e8f9ff" stop-opacity="1"></stop>
+        <stop offset=".4" stop-color="#6ce8ff" stop-opacity=".9"></stop>
+        <stop offset="1" stop-color="#6ce8ff" stop-opacity="0"></stop>
       </radialGradient>
+      <linearGradient id="waterFill" x1="0" x2="0" y1="0" y2="1">
+        <stop offset="0" stop-color="#6ce8ff" stop-opacity=".42"></stop>
+        <stop offset=".5" stop-color="#2a6a82" stop-opacity=".22"></stop>
+        <stop offset="1" stop-color="#06192a" stop-opacity="0"></stop>
+      </linearGradient>
+      <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="6" result="b"></feGaussianBlur>
+        <feMerge><feMergeNode in="b"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>
+      </filter>
     </defs>
-    <g class="godzilla-body">
-      <g class="godzilla-tail-fin">
-        <path d="M 90 96 Q 70 102 50 112 Q 25 124 8 134 L 0 142 L 6 148 Q 28 142 50 132 Q 72 122 92 114 Z"
-              fill="#1A1A1A" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
-        <path d="M 82 103 L 85 98 L 88 104 Z" fill="#2A2A2A" stroke="#000" stroke-width="0.7" stroke-linejoin="round"/>
-        <path d="M 70 109 L 73 104 L 76 110 Z" fill="#2A2A2A" stroke="#000" stroke-width="0.7" stroke-linejoin="round"/>
-        <path d="M 58 115 L 61 110 L 64 116 Z" fill="#2A2A2A" stroke="#000" stroke-width="0.7" stroke-linejoin="round"/>
-        <path d="M 46 121 L 49 116 L 52 122 Z" fill="#2A2A2A" stroke="#000" stroke-width="0.7" stroke-linejoin="round"/>
-        <path d="M 34 127 L 37 122 L 40 128 Z" fill="#2A2A2A" stroke="#000" stroke-width="0.7" stroke-linejoin="round"/>
-        <path d="M 22 133 L 25 128 L 28 134 Z" fill="#2A2A2A" stroke="#000" stroke-width="0.7" stroke-linejoin="round"/>
-        <path d="M 11 139 L 13 134 L 16 140 Z" fill="#2A2A2A" stroke="#000" stroke-width="0.7" stroke-linejoin="round"/>
-        <polygon points="73,104 75,99 78,105" fill="url(#spineGlow)" opacity="0.5"/>
-        <polygon points="49,116 51,111 54,117" fill="url(#spineGlow)" opacity="0.4"/>
-        <polygon points="25,128 27,123 30,129" fill="url(#spineGlow)" opacity="0.3"/>
-        <path d="M 30 135 Q 50 132 68 133 M 55 140 Q 72 137 88 138" stroke="#000" stroke-width="0.5" fill="none" opacity="0.55"/>
-        <circle cx="50" cy="140" r="0.7" fill="#000" opacity="0.5"/>
-        <circle cx="72" cy="143" r="0.7" fill="#000" opacity="0.5"/>
-        <circle cx="35" cy="138" r="0.6" fill="#000" opacity="0.5"/>
+
+    <!-- Shadow on ground -->
+  
+
+    <!-- ROOT_USER (move/scale/rotate) wraps ROOT (anim transforms) -->
+    <g id="rootUser" transform="translate(0 0) translate(615 400) rotate(0) scale(1) translate(-615 -400)">
+    <!-- ROOT (positions the whole character) -->
+    <g id="root" transform="translate(5.952688207886867 -0.5013329342572175) rotate(31.47240145460067 615 400)">
+      <!-- FAR limbs (behind body) -->
+    
+      <g id="jnt-fHip" class="joint" data-joint="fHip" data-px="555" data-py="425" transform="translate(555 425) rotate(-59.93691761051582)">
+        <g transform="translate(-555 -425)">
+        
+      <line x1="555" y1="425" x2="578" y2="528" stroke="#1d2a2b" stroke-width="66" stroke-linecap="round"></line>
+      <line x1="555" y1="425" x2="578" y2="528" stroke="#33484a" stroke-width="62" stroke-linecap="round"></line>
+      <line x1="549.9171815991488" y1="426.1349982836852" x2="572.9171815991488" y2="529.1349982836853" stroke="#4a635f" stroke-width="19.84" stroke-linecap="round" opacity=".55"></line>
+      <line x1="541.3868822824716" y1="455.0738029854675" x2="580.1131177175284" y2="446.4261970145325" stroke="#1d2a2b" stroke-width="1.4" stroke-linecap="round" opacity=".55"></line><line x1="547.1368822824716" y1="480.8238029854675" x2="585.8631177175284" y2="472.1761970145325" stroke="#1d2a2b" stroke-width="1.4" stroke-linecap="round" opacity=".55"></line><line x1="552.8868822824716" y1="506.5738029854675" x2="591.6131177175284" y2="497.9261970145325" stroke="#1d2a2b" stroke-width="1.4" stroke-linecap="round" opacity=".55"></line>
+  
+          <g id="jnt-fKnee" class="joint" data-joint="fKnee" data-px="578" data-py="528" transform="translate(578 528) rotate(23.02329043913636)">
+            <g transform="translate(-578 -528)">
+            
+      <line x1="578" y1="528" x2="572" y2="618" stroke="#1d2a2b" stroke-width="48" stroke-linecap="round"></line>
+      <line x1="578" y1="528" x2="572" y2="618" stroke="#33484a" stroke-width="44" stroke-linecap="round"></line>
+      <line x1="574.3121860565619" y1="527.7541457371042" x2="568.3121860565619" y2="617.7541457371042" stroke="#4a635f" stroke-width="14.08" stroke-linecap="round" opacity=".55"></line>
+      <line x1="562.451184977379" y1="549.5634123318252" x2="590.548815022621" y2="551.4365876681748" stroke="#1d2a2b" stroke-width="1.4" stroke-linecap="round" opacity=".55"></line><line x1="560.951184977379" y1="572.0634123318252" x2="589.048815022621" y2="573.9365876681748" stroke="#1d2a2b" stroke-width="1.4" stroke-linecap="round" opacity=".55"></line><line x1="559.451184977379" y1="594.5634123318252" x2="587.548815022621" y2="596.4365876681748" stroke="#1d2a2b" stroke-width="1.4" stroke-linecap="round" opacity=".55"></line>
+  
+              <g id="jnt-fAnkle" class="joint" data-joint="fAnkle" data-px="572" data-py="618" transform="translate(572 618) rotate(-15.45610989739411)">
+                <g transform="translate(-572 -618)">
+                  <!-- foot main -->
+                
+      <line x1="572" y1="618" x2="608" y2="624" stroke="#1d2a2b" stroke-width="34" stroke-linecap="round"></line>
+      <line x1="572" y1="618" x2="608" y2="624" stroke="#33484a" stroke-width="30" stroke-linecap="round"></line>
+      <line x1="571.5857145519905" y1="620.485712688057" x2="607.5857145519905" y2="626.485712688057" stroke="#4a635f" stroke-width="9.6" stroke-linecap="round" opacity=".55"></line>
+    
+  
+                  <g transform="translate(608 624) rotate(9.462322208025617) scale(1.05)"><path d="M 0 0 Q 8.296582060999157 -4.314049506337939, 17.975927798831506 -3.8471072637322017 L 19.3586914756647 -1.0661155147885246 Q 9.67934573783235 2.4669422426057377, 0 4 Z" fill="var(--skin-dark)"></path>
+              <path d="M 14.519018606748524 -3.299586636091394 L 23.506982506164277 -2.7231402679574943 L 15.901782283581715 0.4814051128522836 Z" fill="var(--claw)"></path><path d="M 0 0 Q 8.4 -3, 18.2 -1 L 19.599999999999998 2 Q 9.799999999999999 4, 0 4 Z" fill="var(--skin-dark)"></path>
+              <path d="M 14.700000000000001 -1 L 23.8 1 L 16.099999999999998 3 Z" fill="var(--claw)"></path><path d="M 0 0 Q 8.296582060999157 -1.6859504936620608, 17.975927798831506 1.8471072637322017 L 19.3586914756647 5.066115514788525 Q 9.67934573783235 5.533057757394262, 0 4 Z" fill="var(--skin-dark)"></path>
+              <path d="M 14.519018606748524 1.299586636091394 L 23.506982506164277 4.723140267957494 L 15.901782283581715 5.518594887147716 Z" fill="var(--claw)"></path></g>
+                
+                </g>
+              </g>
+            
+            </g>
+          </g>
+        
+        </g>
       </g>
-      <g class="godzilla-leg back">
-        <ellipse cx="100" cy="120" rx="14" ry="22" fill="#0F0F0F" stroke="#000" stroke-width="2"/>
-        <path d="M 89 138 Q 92 158 95 178 L 105 178 Q 108 158 111 138 Z"
-              fill="#0F0F0F" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
-        <path d="M 88 178 L 86 188 L 104 188 Z" fill="#0F0F0F" stroke="#000" stroke-width="1.5" stroke-linejoin="round"/>
-        <polygon points="86,188 82,193 87,193" fill="#D0D0D0" stroke="#000" stroke-width="0.7"/>
-        <polygon points="93,189 93,194 99,194" fill="#D0D0D0" stroke="#000" stroke-width="0.7"/>
-        <polygon points="101,188 102,193 106,191" fill="#D0D0D0" stroke="#000" stroke-width="0.7"/>
+    
+      <g id="jnt-fShoulder" class="joint" data-joint="fShoulder" data-px="620" data-py="305" transform="translate(620 305) rotate(-54.6451615591515)">
+        <g transform="translate(-620 -305)">
+        
+      <line x1="620" y1="305" x2="648" y2="372" stroke="#1d2a2b" stroke-width="30" stroke-linecap="round"></line>
+      <line x1="620" y1="305" x2="648" y2="372" stroke="#33484a" stroke-width="26" stroke-linecap="round"></line>
+      <line x1="617.9848909611487" y1="305.842135120714" x2="645.9848909611487" y2="372.842135120714" stroke="#4a635f" stroke-width="8.32" stroke-linecap="round" opacity=".55"></line>
+      <line x1="621.6567274710428" y1="330.54146712652937" x2="637.0099391956239" y2="324.12519954013726" stroke="#1d2a2b" stroke-width="1.4" stroke-linecap="round" opacity=".55"></line><line x1="630.9900608043761" y1="352.87480045986274" x2="646.3432725289572" y2="346.45853287347063" stroke="#1d2a2b" stroke-width="1.4" stroke-linecap="round" opacity=".55"></line>
+  
+          <g id="jnt-fElbow" class="joint" data-joint="fElbow" data-px="648" data-py="372" transform="translate(648 372) rotate(-78.50933053980052)">
+            <g transform="translate(-648 -372)">
+            
+      <line x1="648" y1="372" x2="678" y2="418" stroke="#1d2a2b" stroke-width="24" stroke-linecap="round"></line>
+      <line x1="648" y1="372" x2="678" y2="418" stroke="#33484a" stroke-width="20" stroke-linecap="round"></line>
+      <line x1="646.5928141973111" y1="372.91772987131884" x2="676.5928141973111" y2="418.91772987131884" stroke="#4a635f" stroke-width="6.4" stroke-linecap="round" opacity=".55"></line>
+      <line x1="657.6392921802328" y1="398.4961137955003" x2="668.3607078197672" y2="391.5038862044997" stroke="#1d2a2b" stroke-width="1.4" stroke-linecap="round" opacity=".55"></line>
+  
+              <g id="jnt-fWrist" class="joint" data-joint="fWrist" data-px="678" data-py="418" transform="translate(678 418) rotate(13.110758698729924)">
+                <g transform="translate(-678 -418)">
+                
+      <line x1="678" y1="418" x2="706" y2="428" stroke="#1d2a2b" stroke-width="20" stroke-linecap="round"></line>
+      <line x1="678" y1="418" x2="706" y2="428" stroke="#33484a" stroke-width="16" stroke-linecap="round"></line>
+      <line x1="677.5479638824345" y1="419.26570112918347" x2="705.5479638824345" y2="429.26570112918347" stroke="#4a635f" stroke-width="5.12" stroke-linecap="round" opacity=".55"></line>
+    
+  
+                  <g transform="translate(706 428) rotate(19.653824058053306) scale(0.85)"><path d="M 0 0 Q 8.296582060999157 -4.314049506337939, 17.975927798831506 -3.8471072637322017 L 19.3586914756647 -1.0661155147885246 Q 9.67934573783235 2.4669422426057377, 0 4 Z" fill="var(--skin-dark)"></path>
+              <path d="M 14.519018606748524 -3.299586636091394 L 23.506982506164277 -2.7231402679574943 L 15.901782283581715 0.4814051128522836 Z" fill="var(--claw)"></path><path d="M 0 0 Q 8.4 -3, 18.2 -1 L 19.599999999999998 2 Q 9.799999999999999 4, 0 4 Z" fill="var(--skin-dark)"></path>
+              <path d="M 14.700000000000001 -1 L 23.8 1 L 16.099999999999998 3 Z" fill="var(--claw)"></path><path d="M 0 0 Q 8.296582060999157 -1.6859504936620608, 17.975927798831506 1.8471072637322017 L 19.3586914756647 5.066115514788525 Q 9.67934573783235 5.533057757394262, 0 4 Z" fill="var(--skin-dark)"></path>
+              <path d="M 14.519018606748524 1.299586636091394 L 23.506982506164277 4.723140267957494 L 15.901782283581715 5.518594887147716 Z" fill="var(--claw)"></path></g>
+                
+                </g>
+              </g>
+            
+            </g>
+          </g>
+        
+        </g>
       </g>
-      <g class="godzilla-arm back">
-        <path d="M 134 87 Q 140 94 142 102 L 144 108 L 140 110 L 136 102 Q 133 95 132 89 Z"
-              fill="#0F0F0F" stroke="#000" stroke-width="1.5" stroke-linejoin="round"/>
-        <polygon points="144,106 147,104 146,110" fill="#D0D0D0" stroke="#000" stroke-width="0.7"/>
-        <polygon points="142,110 146,110 143,115" fill="#D0D0D0" stroke="#000" stroke-width="0.7"/>
-      </g>
-      <ellipse cx="115" cy="100" rx="40" ry="20" fill="#1A1A1A" stroke="#000" stroke-width="2.5"/>
-      <path d="M 85 110 Q 115 120 145 110 Q 125 117 85 110 Z" fill="#3A3A3A" opacity="0.85"/>
-      <path d="M 92 102 Q 115 110 142 102 M 92 108 Q 115 114 142 108" stroke="#000" stroke-width="0.5" fill="none" opacity="0.5"/>
-      <polygon points="82,85 86,68 90,85" fill="url(#spineGlow)" stroke="#00838F" stroke-width="1.2" stroke-linejoin="round"/>
-      <polygon points="98,82 103,64 108,82" fill="url(#spineGlow)" stroke="#00838F" stroke-width="1.2" stroke-linejoin="round"/>
-      <polygon points="115,82 120,64 125,82" fill="url(#spineGlow)" stroke="#00838F" stroke-width="1.2" stroke-linejoin="round"/>
-      <polygon points="132,84 137,68 142,84" fill="url(#spineGlow)" stroke="#00838F" stroke-width="1.2" stroke-linejoin="round"/>
-      <g class="godzilla-leg front">
-        <ellipse cx="125" cy="122" rx="14" ry="22" fill="#1A1A1A" stroke="#000" stroke-width="2.5"/>
-        <path d="M 114 140 Q 117 162 120 184 L 130 184 Q 133 162 136 140 Z"
-              fill="#1A1A1A" stroke="#000" stroke-width="2.5" stroke-linejoin="round"/>
-        <path d="M 113 184 L 110 194 L 130 194 Z" fill="#1A1A1A" stroke="#000" stroke-width="1.8" stroke-linejoin="round"/>
-        <polygon points="110,194 106,199 112,199" fill="white" stroke="#000" stroke-width="0.8"/>
-        <polygon points="118,195 118,200 124,200" fill="white" stroke="#000" stroke-width="0.8"/>
-        <polygon points="127,194 128,199 132,197" fill="white" stroke="#000" stroke-width="0.8"/>
-      </g>
-      <g class="godzilla-arm front">
-        <path d="M 140 92 Q 147 100 149 110 L 152 115 L 148 117 L 143 110 Q 140 100 138 94 Z"
-              fill="#1A1A1A" stroke="#000" stroke-width="1.8" stroke-linejoin="round"/>
-        <ellipse cx="151" cy="115" rx="3" ry="2.5" fill="#1A1A1A" stroke="#000" stroke-width="1"/>
-        <polygon points="154,114 157,112 155,119" fill="white" stroke="#000" stroke-width="0.7"/>
-        <polygon points="152,118 156,118 153,123" fill="white" stroke="#000" stroke-width="0.7"/>
-      </g>
-      <path d="M 145 90 Q 158 78 172 76 L 178 84 Q 165 92 152 94 Z"
-            fill="#1A1A1A" stroke="#000" stroke-width="2.5" stroke-linejoin="round"/>
-      <path d="M 162 58 Q 178 48 198 56 Q 202 68 198 82 Q 195 92 185 95 Q 172 96 165 92 Q 152 86 148 75 Q 145 65 162 58 Z"
-            fill="#1A1A1A" stroke="#000" stroke-width="2.5" stroke-linejoin="round"/>
-      <path d="M 165 85 Q 180 95 198 90 L 196 100 Q 182 102 165 95 Z"
-            fill="#0D0D0D" stroke="#000" stroke-width="2.5" stroke-linejoin="round"/>
-      <ellipse cx="183" cy="93" rx="12" ry="2" fill="#18FFFF" opacity="0.4"/>
-      <polygon points="168,84 170,93 172,84" fill="white" stroke="#000" stroke-width="0.7"/>
-      <polygon points="175,84 177,94 179,84" fill="white" stroke="#000" stroke-width="0.7"/>
-      <polygon points="183,84 185,93 187,84" fill="white" stroke="#000" stroke-width="0.7"/>
-      <polygon points="191,84 193,92 195,84" fill="white" stroke="#000" stroke-width="0.7"/>
-      <polygon points="170,98 172,91 174,98" fill="white" stroke="#000" stroke-width="0.7"/>
-      <polygon points="180,99 182,91 184,99" fill="white" stroke="#000" stroke-width="0.7"/>
-      <polygon points="188,98 190,91 192,98" fill="white" stroke="#000" stroke-width="0.7"/>
-      <circle cx="172" cy="68" r="7" fill="#18FFFF" opacity="0.35"/>
-      <circle cx="172" cy="68" r="4.5" fill="white" stroke="#000" stroke-width="1.5"/>
-      <circle cx="173" cy="69" r="2.8" fill="#18FFFF"/>
-      <circle cx="173" cy="69" r="1.3" fill="#000"/>
-      <path d="M 162 60 L 180 65" stroke="#000" stroke-width="3" stroke-linecap="round"/>
-      <path d="M 170 52 L 173 44 L 176 52 Z" fill="#0F0F0F" stroke="#000" stroke-width="1.2" stroke-linejoin="round"/>
-      <path d="M 180 50 L 183 42 L 186 50 Z" fill="#0F0F0F" stroke="#000" stroke-width="1.2" stroke-linejoin="round"/>
-      <circle cx="193" cy="74" r="1.3" fill="#000"/>
-      <circle cx="196" cy="76" r="0.9" fill="#000"/>
-      <path d="M 155 75 Q 158 77 161 75 M 165 80 Q 168 82 171 80" stroke="#000" stroke-width="0.5" fill="none" opacity="0.5"/>
+
+      <!-- TAIL behind body too -->
+      <g id="jnt-tail1" class="joint" data-joint="tail1" data-px="470" data-py="420" transform="translate(470 420) rotate(17.8580646236606)">
+                <g transform="translate(-470 -420)">
+                
+      
+      <line x1="470" y1="420" x2="400" y2="445" stroke="var(--skin-dark)" stroke-width="64" stroke-linecap="round"></line>
+      <line x1="470" y1="420" x2="400" y2="445" stroke="var(--skin-mid)" stroke-width="60" stroke-linecap="round"></line>
+      <line x1="468.30486455912927" y1="415.253620765562" x2="398.30486455912927" y2="440.253620765562" stroke="var(--skin-light)" stroke-width="19.2" stroke-linecap="round" opacity=".55"></line>
+      <line x1="440.2090078443021" y1="410.2518886307124" x2="453.12432548903126" y2="446.4147780359542" stroke="var(--skin-dark)" stroke-width="1.4" stroke-linecap="round" opacity=".55"></line><line x1="416.87567451096874" y1="418.5852219640458" x2="429.7909921556979" y2="454.7481113692876" stroke="var(--skin-dark)" stroke-width="1.4" stroke-linecap="round" opacity=".55"></line>
+  
+        <path d="M 455.599548530431 425.14301838198895 L 452.77432279564647 399.3931038278101 L 466.900451469569 421.10698161801105 Z" fill="var(--spine)" stroke="var(--skin-dark)" stroke-width="0.6"></path><path d="M 438.099548530431 431.39301838198895 L 435.27432279564647 405.6431038278101 L 449.400451469569 427.35698161801105 Z" fill="var(--spine)" stroke="var(--skin-dark)" stroke-width="0.6"></path><path d="M 420.599548530431 437.64301838198895 L 417.77432279564647 411.8931038278101 L 431.900451469569 433.60698161801105 Z" fill="var(--spine)" stroke="var(--skin-dark)" stroke-width="0.6"></path><path d="M 403.099548530431 443.89301838198895 L 400.27432279564647 418.1431038278101 L 414.400451469569 439.85698161801105 Z" fill="var(--spine)" stroke="var(--skin-dark)" stroke-width="0.6"></path>
+    
+                  <g id="jnt-tail2" class="joint" data-joint="tail2" data-px="400" data-py="445" transform="translate(400 445) rotate(18.727008744520543)">
+                <g transform="translate(-400 -445)">
+                
+      
+      <line x1="400" y1="445" x2="335" y2="475" stroke="var(--skin-dark)" stroke-width="52" stroke-linecap="round"></line>
+      <line x1="400" y1="445" x2="335" y2="475" stroke="var(--skin-mid)" stroke-width="48" stroke-linecap="round"></line>
+      <line x1="398.3103574284742" y1="441.33910776169415" x2="333.3103574284742" y2="471.33910776169415" stroke="var(--skin-light)" stroke-width="15.36" stroke-linecap="round" opacity=".55"></line>
+      <line x1="371.8965997275209" y1="441.05374385407305" x2="384.77006693914575" y2="468.94625614592695" stroke="var(--skin-dark)" stroke-width="1.4" stroke-linecap="round" opacity=".55"></line><line x1="350.22993306085425" y1="451.05374385407305" x2="363.1034002724791" y2="478.94625614592695" stroke="var(--skin-dark)" stroke-width="1.4" stroke-linecap="round" opacity=".55"></line>
+  
+        <path d="M 386.4272436929973 451.2643490647705 L 383.42678714237115 430.44553880847087 L 397.3227563070027 446.2356509352295 Z" fill="var(--spine)" stroke="var(--skin-dark)" stroke-width="0.6"></path><path d="M 370.1772436929973 458.7643490647705 L 367.17678714237115 437.94553880847087 L 381.0727563070027 453.7356509352295 Z" fill="var(--spine)" stroke="var(--skin-dark)" stroke-width="0.6"></path><path d="M 353.9272436929973 466.2643490647705 L 350.92678714237115 445.44553880847087 L 364.8227563070027 461.2356509352295 Z" fill="var(--spine)" stroke="var(--skin-dark)" stroke-width="0.6"></path><path d="M 337.6772436929973 473.7643490647705 L 334.67678714237115 452.94553880847087 L 348.5727563070027 468.7356509352295 Z" fill="var(--spine)" stroke="var(--skin-dark)" stroke-width="0.6"></path>
+    
+                  <g id="jnt-tail3" class="joint" data-joint="tail3" data-px="335" data-py="475" transform="translate(335 475) rotate(10.14964440938206)">
+                <g transform="translate(-335 -475)">
+                
+      
+      <line x1="335" y1="475" x2="275" y2="505" stroke="var(--skin-dark)" stroke-width="42" stroke-linecap="round"></line>
+      <line x1="335" y1="475" x2="275" y2="505" stroke="var(--skin-mid)" stroke-width="38" stroke-linecap="round"></line>
+      <line x1="333.5724942031641" y1="472.14498840632825" x2="273.5724942031641" y2="502.14498840632825" stroke="var(--skin-light)" stroke-width="12.16" stroke-linecap="round" opacity=".55"></line>
+      <line x1="309.5618826787205" y1="474.123765357441" x2="320.4381173212795" y2="495.876234642559" stroke="var(--skin-dark)" stroke-width="1.4" stroke-linecap="round" opacity=".55"></line><line x1="289.5618826787205" y1="484.123765357441" x2="300.4381173212795" y2="505.876234642559" stroke="var(--skin-dark)" stroke-width="1.4" stroke-linecap="round" opacity=".55"></line>
+  
+        <path d="M 322.1334368540005 481.43328157299976 L 320.3624710158207 464.4749420316413 L 332.8665631459995 476.06671842700024 Z" fill="var(--spine)" stroke="var(--skin-dark)" stroke-width="0.6"></path><path d="M 307.1334368540005 488.93328157299976 L 305.3624710158207 471.9749420316413 L 317.8665631459995 483.56671842700024 Z" fill="var(--spine)" stroke="var(--skin-dark)" stroke-width="0.6"></path><path d="M 292.1334368540005 496.43328157299976 L 290.3624710158207 479.4749420316413 L 302.8665631459995 491.06671842700024 Z" fill="var(--spine)" stroke="var(--skin-dark)" stroke-width="0.6"></path><path d="M 277.1334368540005 503.93328157299976 L 275.3624710158207 486.9749420316413 L 287.8665631459995 498.56671842700024 Z" fill="var(--spine)" stroke="var(--skin-dark)" stroke-width="0.6"></path>
+    
+                  <g id="jnt-tail4" class="joint" data-joint="tail4" data-px="275" data-py="505" transform="translate(275 505) rotate(-8.571980525518654)">
+                <g transform="translate(-275 -505)">
+                
+      
+      <line x1="275" y1="505" x2="225" y2="530" stroke="var(--skin-dark)" stroke-width="34" stroke-linecap="round"></line>
+      <line x1="275" y1="505" x2="225" y2="530" stroke="var(--skin-mid)" stroke-width="30" stroke-linecap="round"></line>
+      <line x1="273.8730217393401" y1="502.74604347868024" x2="223.87302173934012" y2="527.7460434786802" stroke="var(--skin-light)" stroke-width="9.6" stroke-linecap="round" opacity=".55"></line>
+      <line x1="245.7067494832004" y1="508.9134989664008" x2="254.2932505167996" y2="526.0865010335992" stroke="var(--skin-dark)" stroke-width="1.4" stroke-linecap="round" opacity=".55"></line>
+  
+        <path d="M 261.30010352066716 511.84994823966645 L 261.0317753633672 497.89688406006775 L 272.0332298126662 506.4833850936669 Z" fill="var(--spine)" stroke="var(--skin-dark)" stroke-width="0.6"></path><path d="M 244.6334368540005 520.1832815729997 L 244.36510869670053 506.23021739340106 L 255.3665631459995 514.8167184270003 Z" fill="var(--spine)" stroke="var(--skin-dark)" stroke-width="0.6"></path><path d="M 227.96677018733382 528.5166149063331 L 227.69844203003385 514.5635507267344 L 238.6998964793328 523.1500517603337 Z" fill="var(--spine)" stroke="var(--skin-dark)" stroke-width="0.6"></path>
+    
+                  <g id="jnt-tail5" class="joint" data-joint="tail5" data-px="225" data-py="530" transform="translate(225 530) rotate(-28.670387492170022)">
+                <g transform="translate(-225 -530)">
+                
+      
+      <line x1="225" y1="530" x2="185" y2="550" stroke="var(--skin-dark)" stroke-width="26" stroke-linecap="round"></line>
+      <line x1="225" y1="530" x2="185" y2="550" stroke="var(--skin-mid)" stroke-width="22" stroke-linecap="round"></line>
+      <line x1="224.17354927551608" y1="528.3470985510321" x2="184.17354927551608" y2="548.3470985510321" stroke="var(--skin-light)" stroke-width="7.04" stroke-linecap="round" opacity=".55"></line>
+      <line x1="201.8516162876803" y1="533.7032325753606" x2="208.1483837123197" y2="546.2967674246394" stroke="var(--skin-dark)" stroke-width="1.4" stroke-linecap="round" opacity=".55"></line>
+  
+        <path d="M 209.6334368540005 537.6832815729997 L 210.86774637758037 526.7354927551607 L 220.3665631459995 532.3167184270003 Z" fill="var(--spine)" stroke="var(--skin-dark)" stroke-width="0.6"></path><path d="M 189.6334368540005 547.6832815729997 L 190.86774637758037 536.7354927551607 L 200.3665631459995 542.3167184270003 Z" fill="var(--spine)" stroke="var(--skin-dark)" stroke-width="0.6"></path>
+    
+                  <g id="jnt-tail6" class="joint" data-joint="tail6" data-px="185" data-py="550" transform="translate(185 550) rotate(-41.71808600671818)">
+                <g transform="translate(-185 -550)">
+                
+      
+      <line x1="185" y1="550" x2="150" y2="570" stroke="var(--skin-dark)" stroke-width="18" stroke-linecap="round"></line>
+      <line x1="185" y1="550" x2="150" y2="570" stroke="var(--skin-mid)" stroke-width="14" stroke-linecap="round"></line>
+      <line x1="184.41654060849237" y1="548.9789460648616" x2="149.41654060849237" y2="568.9789460648616" stroke="var(--skin-light)" stroke-width="4.48" stroke-linecap="round" opacity=".55"></line>
+      <line x1="165.2772975561614" y1="556.1102707232824" x2="169.7227024438386" y2="563.8897292767176" stroke="var(--skin-dark)" stroke-width="1.4" stroke-linecap="round" opacity=".55"></line>
+  
+        <path d="M 171.04054114725324 557.976833630141 L 173.33270304246182 549.8947303243082 L 181.45945885274676 552.023166369859 Z" fill="var(--spine)" stroke="var(--skin-dark)" stroke-width="0.6"></path><path d="M 153.54054114725324 567.976833630141 L 155.83270304246182 559.8947303243082 L 163.95945885274676 562.023166369859 Z" fill="var(--spine)" stroke="var(--skin-dark)" stroke-width="0.6"></path>
+    
+                
+                
+                </g>
+              </g>
+                
+                </g>
+              </g>
+                
+                </g>
+              </g>
+                
+                </g>
+              </g>
+                
+                </g>
+              </g>
+                
+                </g>
+              </g>
+
+      <!-- BODY -->
+      <g id="body">
+      
+    <!-- back shadow blob -->
+    <path d="M 666 234
+             C 580 244, 504 282, 466 344
+             C 450 380, 454 414, 468 462
+             C 510 484, 580 492, 670 498
+             C 740 480, 770 440, 800 400
+             C 800 330, 770 280, 740 240
+             C 700 220, 666 234 Z" fill="var(--skin-dark)"></path>
+    <!-- main body (top-left chamfered along the red cut line) -->
+    <path d="M 660 244
+             C 600 252, 528 280, 484 340
+             C 472 372, 474 392, 476 415
+             C 492 460, 530 478, 588 484
+             C 670 492, 730 472, 758 436
+             C 786 398, 786 332, 758 286
+             C 728 250, 692 240, 660 244 Z" fill="url(#bodyGrad)"></path>
+    <!-- belly plate (removed; scute lines now sit on body skin) -->
+    <!-- belly scutes -->
+    <g stroke="var(--skin-dark)" stroke-width="1.2" fill="none" opacity=".55">
+      <path d="M 552 388 Q 640 408, 740 392"></path>
+      <path d="M 552 406 Q 640 426, 744 408"></path>
+      <path d="M 558 424 Q 642 444, 744 422"></path>
+      <path d="M 568 440 Q 644 458, 740 436"></path>
     </g>
+    <!-- shoulder scales -->
+    <g fill="var(--skin-dark)" opacity=".55">
+      <ellipse cx="660" cy="270" rx="22" ry="10"></ellipse>
+      <ellipse cx="700" cy="288" rx="18" ry="8"></ellipse>
+      <ellipse cx="610" cy="262" rx="18" ry="9"></ellipse>
+      <ellipse cx="540" cy="294" rx="14" ry="7"></ellipse>
+      <ellipse cx="520" cy="340" rx="14" ry="7"></ellipse>
+      <ellipse cx="510" cy="384" rx="13" ry="7"></ellipse>
+    </g>
+
+        <g id="spinesContainer" class="spines">
+        <path d="M 648 246 L 628.7589989951628 212.26852981225767 L 632.7634247453237 250.89485212109452 Z" fill="var(--spine)" stroke="var(--skin-dark)" stroke-width="1"></path>
+        <path d="M 638.3794994975814 229.13426490612883 L 628.7589989951628 212.26852981225767 L 630.7612118702432 231.5816909666761 Z" fill="var(--spine-tip)" opacity=".6"></path>
+    
+        <path d="M 632.7634247453237 250.89485212109452 L 613.448404860996 218.69002242196234 L 617.6891448886782 256.00271695210444 Z" fill="var(--spine)" stroke="var(--skin-dark)" stroke-width="1"></path>
+        <path d="M 623.1059148031599 234.79243727152843 L 613.448404860996 218.69002242196234 L 615.5687748748371 237.3463696870334 Z" fill="var(--spine-tip)" opacity=".6"></path>
+    
+        <path d="M 617.6891448886782 256.00271695210444 L 597.9020827504671 225.61016856895117 L 602.9313176591504 261.5259258562063 Z" fill="var(--spine)" stroke="var(--skin-dark)" stroke-width="1"></path>
+        <path d="M 607.7956138195727 240.8064427605278 L 597.9020827504671 225.61016856895117 L 600.4167002048088 243.56804721257873 Z" fill="var(--spine-tip)" opacity=".6"></path>
+    
+        <path d="M 602.9313176591504 261.5259258562063 L 582.3653440359286 233.2353078219809 L 588.6282320297124 267.6459831104261 Z" fill="var(--spine)" stroke="var(--skin-dark)" stroke-width="1"></path>
+        <path d="M 592.6483308475395 247.3806168390936 L 582.3653440359286 233.2353078219809 L 585.4967880328205 250.44064546620348 Z" fill="var(--spine-tip)" opacity=".6"></path>
+    
+        <path d="M 588.6282320297124 267.6459831104261 L 567.0896896844305 241.74476599586288 L 574.8953743306723 274.5144645232932 Z" fill="var(--spine)" stroke="var(--skin-dark)" stroke-width="1"></path>
+        <path d="M 577.8589608570715 254.69537455314446 L 567.0896896844305 241.74476599586288 L 570.9925320075514 258.12961525957803 Z" fill="var(--spine-tip)" opacity=".6"></path>
+    
+        <path d="M 574.8953743306723 274.5144645232932 L 552.3258002529236 251.26473427698915 L 561.8196372828438 282.2454167908753 Z" fill="var(--spine)" stroke="var(--skin-dark)" stroke-width="1"></path>
+        <path d="M 563.610587291798 262.88959940014115 L 552.3258002529236 251.26473427698915 L 557.0727187678838 266.7550755339322 Z" fill="var(--spine-tip)" opacity=".6"></path>
+    
+        <path d="M 561.8196372828438 282.2454167908753 L 538.3067246497953 261.8451369282138 L 549.4549628336914 290.90963871922 Z" fill="var(--spine)" stroke="var(--skin-dark)" stroke-width="1"></path>
+        <path d="M 550.0631809663196 272.0452768595445 L 538.3067246497953 261.8451369282138 L 543.8808437417433 276.3773878237169 Z" fill="var(--spine-tip)" opacity=".6"></path>
+    
+        <path d="M 549.4549628336914 290.90963871922 L 525.2203905811149 273.448711289701 L 537.8196372828438 300.5311310765896 Z" fill="var(--spine)" stroke="var(--skin-dark)" stroke-width="1"></path>
+        <path d="M 537.3376767074031 282.1791750044605 L 525.2203905811149 273.448711289701 L 531.5200139319793 286.98992118314527 Z" fill="var(--spine-tip)" opacity=".6"></path>
+    
+        <path d="M 537.8196372828438 300.5311310765896 L 513.1799299275925 285.95956794751964 L 526.8953743306723 311.08589309472177 Z" fill="var(--spine)" stroke="var(--skin-dark)" stroke-width="1"></path>
+        <path d="M 525.4997836052182 293.24534951205464 L 513.1799299275925 285.95956794751964 L 520.0376521291324 298.5227305211207 Z" fill="var(--spine-tip)" opacity=".6"></path>
+    
+        <path d="M 526.8953743306723 311.08589309472177 L 502.20604246652664 299.2086566115441 L 516.6282320297124 322.50312596756896 Z" fill="var(--spine)" stroke="var(--skin-dark)" stroke-width="1"></path>
+        <path d="M 514.5507083985995 305.1472748531329 L 502.20604246652664 299.2086566115441 L 509.4171372481195 310.85589128955655 Z" fill="var(--spine-tip)" opacity=".6"></path>
+    
+        <path d="M 516.6282320297124 322.50312596756896 L 492.23017091047456 313.00349684578606 L 506.93131765915035 334.6687829990634 Z" fill="var(--spine)" stroke="var(--skin-dark)" stroke-width="1"></path>
+        <path d="M 504.4292014700935 317.75331140667754 L 492.23017091047456 313.00349684578606 L 499.58074428481245 323.83613992242476 Z" fill="var(--spine-tip)" opacity=".6"></path>
+    
+        <path d="M 506.93131765915035 334.6687829990634 L 483.1148591580042 327.149399397536 L 497.6891448886782 347.4312883806758 Z" fill="var(--spine)" stroke="var(--skin-dark)" stroke-width="1"></path>
+        <path d="M 495.0230884085773 330.90909119829973 L 483.1148591580042 327.149399397536 L 490.4020020233412 337.2903438891059 Z" fill="var(--spine-tip)" opacity=".6"></path>
+    
+        <path d="M 497.6891448886782 347.4312883806758 L 474.6801153706182 341.4583820764445 L 488.76342474532373 360.6091378353803 Z" fill="var(--spine)" stroke="var(--skin-dark)" stroke-width="1"></path>
+        <path d="M 486.1846301296482 344.4448352285601 L 474.6801153706182 341.4583820764445 L 481.72177005797096 351.0337599559124 Z" fill="var(--spine-tip)" opacity=".6"></path>
+    
+        <path d="M 488.76342474532373 360.6091378353803 L 466.7264022460033 355.7503478564716 L 480 374 Z" fill="var(--spine)" stroke="var(--skin-dark)" stroke-width="1"></path>
+        <path d="M 477.7449134956635 358.17974284592594 L 466.7264022460033 355.7503478564716 L 473.36320112300166 364.87517392823577 Z" fill="var(--spine-tip)" opacity=".6"></path>
+      </g>
+      </g>
+
+      <!-- HEAD (with jaw) -->
+    
+      <g id="jnt-neck" class="joint" data-joint="neck" data-px="705" data-py="285" transform="translate(705 285) rotate(-7.039426493427611)">
+        <g transform="translate(-705 -285)">
+          <!-- neck connector -->
+          <path d="M 680 260 Q 700 250, 740 248 L 740 300 Q 700 304, 680 300 Z" fill="var(--skin-dark)"></path>
+        
+    <!-- skull base / back of head -->
+    <path d="M 700 256
+             C 690 240, 700 220, 730 215
+             C 770 210, 810 215, 845 230
+             C 890 250, 920 270, 920 290
+             C 920 310, 905 322, 885 326
+             L 820 332
+             C 800 332, 780 326, 760 318
+             C 730 308, 706 290, 700 270
+             Z" fill="url(#headGrad)" stroke="var(--skin-dark)" stroke-width="1.5"></path>
+    <!-- brow ridge -->
+    <path d="M 760 238 L 820 232 L 860 248 L 868 264 L 832 260 L 800 256 L 770 256 Z" fill="var(--skin-dark)"></path>
+    <!-- cheek scale -->
+    <path d="M 760 286 Q 800 304, 850 302" stroke="var(--skin-dark)" stroke-width="2" fill="none" opacity=".7"></path>
+    <!-- upper teeth -->
+    <g fill="var(--tooth)" stroke="var(--skin-dark)" stroke-width="0.6">
+      <path d="M 800 306 L 808 320 L 816 306 Z"></path>
+      <path d="M 820 306 L 826 322 L 834 306 Z"></path>
+      <path d="M 842 306 L 848 320 L 856 306 Z"></path>
+      <path d="M 862 304 L 868 316 L 874 304 Z"></path>
+    </g>
+    <!-- mouth corner shadow -->
+    <path d="M 785 304 Q 825 312, 880 308" stroke="var(--skin-dark)" stroke-width="1.6" fill="none"></path>
+    <!-- eye -->
+    <g>
+      <ellipse cx="832" cy="252" rx="13" ry="9" fill="#1a1a1a"></ellipse>
+      <ellipse cx="832" cy="252" rx="10" ry="6.5" fill="var(--eye)"></ellipse>
+      <ellipse cx="834" cy="251" rx="2.4" ry="5.5" fill="#1a1a1a"></ellipse>
+      <circle cx="830" cy="250" r="1.6" fill="#fff" opacity=".95"></circle>
+    </g>
+    <!-- nostril -->
+    <ellipse cx="900" cy="280" rx="4" ry="2.4" fill="var(--skin-dark)"></ellipse>
+    <!-- head spines -->
+    <g fill="var(--spine)" stroke="var(--skin-dark)" stroke-width="0.6">
+      <path d="M 725 215 L 730 196 L 742 218 Z"></path>
+      <path d="M 752 210 L 760 192 L 772 214 Z"></path>
+      <path d="M 778 208 L 788 192 L 796 214 Z"></path>
+      <path d="M 806 210 L 818 196 L 824 218 Z"></path>
+    </g>
+
+          <g id="jnt-jaw" class="joint" data-joint="jaw" data-px="800" data-py="308" transform="translate(800 308) rotate(5.00524045134058)">
+            <g transform="translate(-800 -308)">
+            
+    <path d="M 800 308
+             Q 820 332, 860 336
+             Q 895 338, 910 330
+             Q 902 346, 870 352
+             Q 830 354, 808 346
+             Q 794 332, 800 308 Z" fill="var(--skin-dark)"></path>
+    <path d="M 800 312
+             Q 818 330, 858 332
+             Q 890 334, 906 326
+             L 906 332
+             Q 880 348, 832 348
+             Q 808 344, 800 332 Z" fill="var(--skin-mid)"></path>
+    <!-- lower teeth -->
+    <g fill="var(--tooth)" stroke="var(--skin-dark)" stroke-width="0.6">
+      <path d="M 815 320 L 820 308 L 828 318 Z"></path>
+      <path d="M 838 326 L 846 312 L 852 324 Z"></path>
+      <path d="M 862 328 L 870 314 L 876 326 Z"></path>
+      <path d="M 884 326 L 892 314 L 898 322 Z"></path>
+    </g>
+    <!-- jaw highlight -->
+    <path d="M 808 330 Q 850 346, 900 336" stroke="var(--skin-light)" stroke-width="1" fill="none" opacity=".4"></path>
+    <!-- inner mouth glow (only visible when open) -->
+    <path d="M 802 314 Q 845 322, 905 320 L 905 324 Q 845 330, 802 318 Z" fill="#ff6e4a" opacity=".75"></path>
+
+            
+            </g>
+          </g>
+        
+        </g>
+      </g>
+
+        <!-- NEAR limbs (in front of body) -->
+    
+      <g id="jnt-nHip" class="joint" data-joint="nHip" data-px="610" data-py="422" transform="translate(610 422) rotate(-40.06308238948418)">
+        <g transform="translate(-610 -422)">
+        
+      <line x1="610" y1="422" x2="638" y2="528" stroke="var(--skin-dark)" stroke-width="66" stroke-linecap="round"></line>
+      <line x1="610" y1="422" x2="638" y2="528" stroke="var(--skin-mid)" stroke-width="62" stroke-linecap="round"></line>
+      <line x1="604.964708622145" y1="423.33007696773524" x2="632.964708622145" y2="529.3300769677353" stroke="var(--skin-light)" stroke-width="19.84" stroke-linecap="round" opacity=".55"></line>
+      <line x1="597.8179376081717" y1="453.56695987708673" x2="636.1820623918283" y2="443.43304012291327" stroke="var(--skin-dark)" stroke-width="1.4" stroke-linecap="round" opacity=".55"></line><line x1="604.8179376081717" y1="480.06695987708673" x2="643.1820623918283" y2="469.93304012291327" stroke="var(--skin-dark)" stroke-width="1.4" stroke-linecap="round" opacity=".55"></line><line x1="611.8179376081717" y1="506.56695987708673" x2="650.1820623918283" y2="496.43304012291327" stroke="var(--skin-dark)" stroke-width="1.4" stroke-linecap="round" opacity=".55"></line>
+  
+          <g id="jnt-nKnee" class="joint" data-joint="nKnee" data-px="638" data-py="528" transform="translate(638 528) rotate(36.97670956086364)">
+            <g transform="translate(-638 -528)">
+            
+      <line x1="638" y1="528" x2="628" y2="622" stroke="var(--skin-dark)" stroke-width="48" stroke-linecap="round"></line>
+      <line x1="638" y1="528" x2="628" y2="622" stroke="var(--skin-mid)" stroke-width="44" stroke-linecap="round"></line>
+      <line x1="634.32473857689" y1="527.6090147422224" x2="624.32473857689" y2="621.6090147422224" stroke="var(--skin-light)" stroke-width="14.08" stroke-linecap="round" opacity=".55"></line>
+      <line x1="621.4990041024381" y1="550.0105323513231" x2="649.5009958975619" y2="552.9894676486769" stroke="var(--skin-dark)" stroke-width="1.4" stroke-linecap="round" opacity=".55"></line><line x1="618.9990041024381" y1="573.5105323513231" x2="647.0009958975619" y2="576.4894676486769" stroke="var(--skin-dark)" stroke-width="1.4" stroke-linecap="round" opacity=".55"></line><line x1="616.4990041024381" y1="597.0105323513231" x2="644.5009958975619" y2="599.9894676486769" stroke="var(--skin-dark)" stroke-width="1.4" stroke-linecap="round" opacity=".55"></line>
+  
+              <g id="jnt-nAnkle" class="joint" data-joint="nAnkle" data-px="628" data-py="622" transform="translate(628 622) rotate(-12.54389010260589)">
+                <g transform="translate(-628 -622)">
+                  <!-- foot main -->
+                
+      <line x1="628" y1="622" x2="664" y2="628" stroke="var(--skin-dark)" stroke-width="34" stroke-linecap="round"></line>
+      <line x1="628" y1="622" x2="664" y2="628" stroke="var(--skin-mid)" stroke-width="30" stroke-linecap="round"></line>
+      <line x1="627.5857145519905" y1="624.485712688057" x2="663.5857145519905" y2="630.485712688057" stroke="var(--skin-light)" stroke-width="9.6" stroke-linecap="round" opacity=".55"></line>
+    
+  
+                  <g transform="translate(664 628) rotate(9.462322208025617) scale(1.05)"><path d="M 0 0 Q 8.296582060999157 -4.314049506337939, 17.975927798831506 -3.8471072637322017 L 19.3586914756647 -1.0661155147885246 Q 9.67934573783235 2.4669422426057377, 0 4 Z" fill="var(--skin-dark)"></path>
+              <path d="M 14.519018606748524 -3.299586636091394 L 23.506982506164277 -2.7231402679574943 L 15.901782283581715 0.4814051128522836 Z" fill="var(--claw)"></path><path d="M 0 0 Q 8.4 -3, 18.2 -1 L 19.599999999999998 2 Q 9.799999999999999 4, 0 4 Z" fill="var(--skin-dark)"></path>
+              <path d="M 14.700000000000001 -1 L 23.8 1 L 16.099999999999998 3 Z" fill="var(--claw)"></path><path d="M 0 0 Q 8.296582060999157 -1.6859504936620608, 17.975927798831506 1.8471072637322017 L 19.3586914756647 5.066115514788525 Q 9.67934573783235 5.533057757394262, 0 4 Z" fill="var(--skin-dark)"></path>
+              <path d="M 14.519018606748524 1.299586636091394 L 23.506982506164277 4.723140267957494 L 15.901782283581715 5.518594887147716 Z" fill="var(--claw)"></path></g>
+                
+                </g>
+              </g>
+            
+            </g>
+          </g>
+        
+        </g>
+      </g>
+    
+      <g id="jnt-nShoulder" class="joint" data-joint="nShoulder" data-px="660" data-py="298" transform="translate(660 298) rotate(39.6451615591515)">
+        <g transform="translate(-660 -298)">
+        
+      <line x1="660" y1="298" x2="690" y2="368" stroke="var(--skin-dark)" stroke-width="30" stroke-linecap="round"></line>
+      <line x1="660" y1="298" x2="690" y2="368" stroke="var(--skin-mid)" stroke-width="26" stroke-linecap="round"></line>
+      <line x1="657.9925872544405" y1="298.8603197480969" x2="687.9925872544405" y2="368.8603197480969" stroke="var(--skin-light)" stroke-width="8.32" stroke-linecap="round" opacity=".55"></line>
+      <line x1="662.3527133502498" y1="324.610741897512" x2="677.6472866497502" y2="318.0559247691546" stroke="var(--skin-dark)" stroke-width="1.4" stroke-linecap="round" opacity=".55"></line><line x1="672.3527133502498" y1="347.9440752308454" x2="687.6472866497502" y2="341.389258102488" stroke="var(--skin-dark)" stroke-width="1.4" stroke-linecap="round" opacity=".55"></line>
+  
+          <g id="jnt-nElbow" class="joint" data-joint="nElbow" data-px="690" data-py="368" transform="translate(690 368) rotate(-66.49066946019948)">
+            <g transform="translate(-690 -368)">
+            
+      <line x1="690" y1="368" x2="720" y2="412" stroke="var(--skin-dark)" stroke-width="24" stroke-linecap="round"></line>
+      <line x1="690" y1="368" x2="720" y2="412" stroke="var(--skin-mid)" stroke-width="20" stroke-linecap="round"></line>
+      <line x1="688.6119380640833" y1="368.94640586539776" x2="718.6119380640833" y2="412.94640586539776" stroke="var(--skin-light)" stroke-width="6.4" stroke-linecap="round" opacity=".55"></line>
+      <line x1="699.7121450060317" y1="393.6053556777057" x2="710.2878549939683" y2="386.3946443222943" stroke="var(--skin-dark)" stroke-width="1.4" stroke-linecap="round" opacity=".55"></line>
+  
+              <g id="jnt-nWrist" class="joint" data-joint="nWrist" data-px="720" data-py="412" transform="translate(720 412) rotate(28.889241301270076)">
+                <g transform="translate(-720 -412)">
+                
+      <line x1="720" y1="412" x2="748" y2="422" stroke="var(--skin-dark)" stroke-width="20" stroke-linecap="round"></line>
+      <line x1="720" y1="412" x2="748" y2="422" stroke="var(--skin-mid)" stroke-width="16" stroke-linecap="round"></line>
+      <line x1="719.5479638824345" y1="413.26570112918347" x2="747.5479638824345" y2="423.26570112918347" stroke="var(--skin-light)" stroke-width="5.12" stroke-linecap="round" opacity=".55"></line>
+    
+  
+                  <g transform="translate(748 422) rotate(19.653824058053306) scale(0.85)"><path d="M 0 0 Q 8.296582060999157 -4.314049506337939, 17.975927798831506 -3.8471072637322017 L 19.3586914756647 -1.0661155147885246 Q 9.67934573783235 2.4669422426057377, 0 4 Z" fill="var(--skin-dark)"></path>
+              <path d="M 14.519018606748524 -3.299586636091394 L 23.506982506164277 -2.7231402679574943 L 15.901782283581715 0.4814051128522836 Z" fill="var(--claw)"></path><path d="M 0 0 Q 8.4 -3, 18.2 -1 L 19.599999999999998 2 Q 9.799999999999999 4, 0 4 Z" fill="var(--skin-dark)"></path>
+              <path d="M 14.700000000000001 -1 L 23.8 1 L 16.099999999999998 3 Z" fill="var(--claw)"></path><path d="M 0 0 Q 8.296582060999157 -1.6859504936620608, 17.975927798831506 1.8471072637322017 L 19.3586914756647 5.066115514788525 Q 9.67934573783235 5.533057757394262, 0 4 Z" fill="var(--skin-dark)"></path>
+              <path d="M 14.519018606748524 1.299586636091394 L 23.506982506164277 4.723140267957494 L 15.901782283581715 5.518594887147716 Z" fill="var(--claw)"></path></g>
+                
+                </g>
+              </g>
+            
+            </g>
+          </g>
+        
+        </g>
+      </g>
+
+      <!-- Spine edit handles (move/stretch the dorsal arc) -->
+    
+    </g>
+    </g>
+
+    <!-- Root manipulation handles (outside rootUser so they don't scale/rotate) -->
+  
+
+    <!-- Water layer (swim mode) -->
+  
+
+    <!-- Atomic breath beam, drawn last -->
+  
   </svg>
 
   <svg class="submarine" id="submarine" viewBox="0 0 90 110" style="transform: translateY(-50%);">
@@ -1682,6 +2051,52 @@
   // ============ Init ============
   buildBackgrounds();
   requestAnimationFrame(gameLoop);
+
+  // ============ Godzilla swim animation (drives joint rotations inside the rig SVG) ============
+  (function godzillaSwim() {
+    const BODY_PIVOT_X = 615, BODY_PIVOT_Y = 400;
+    const INVERT = new Set(['nElbow','fElbow']);
+    const root = document.getElementById('root');
+    if (!root) return;
+    function setJoint(joint, angle){
+      const g = document.getElementById('jnt-'+joint);
+      if (!g) return;
+      const px = +g.dataset.px, py = +g.dataset.py;
+      const applied = INVERT.has(joint) ? -angle : angle;
+      g.setAttribute('transform', `translate(${px} ${py}) rotate(${applied})`);
+    }
+    const t0 = performance.now();
+    function tick(t){
+      const phase = ((t - t0) / 950) % 1;
+      const tau = phase * Math.PI * 2;
+      const tilt = 28 + Math.sin(tau) * 3.5;
+      const bobX = Math.sin(tau) * 6;
+      const bobY = Math.cos(tau) * 4;
+      root.setAttribute('transform', `translate(${bobX} ${bobY}) rotate(${tilt} ${BODY_PIVOT_X} ${BODY_PIVOT_Y})`);
+      setJoint('tail1', 18 * Math.sin(tau));
+      setJoint('tail2', 24 * Math.sin(tau + 0.55));
+      setJoint('tail3', 30 * Math.sin(tau + 1.10));
+      setJoint('tail4', 34 * Math.sin(tau + 1.70));
+      setJoint('tail5', 38 * Math.sin(tau + 2.30));
+      setJoint('tail6', 42 * Math.sin(tau + 2.90));
+      setJoint('nHip',  -48 + 8 * Math.sin(tau));
+      setJoint('nKnee',  28 + 12 * Math.sin(tau + 0.6));
+      setJoint('nAnkle',-14 + 6 * Math.sin(tau + 1.2));
+      setJoint('fHip',  -52 - 8 * Math.sin(tau));
+      setJoint('fKnee',  32 - 12 * Math.sin(tau + 0.6));
+      setJoint('fAnkle',-14 - 6 * Math.sin(tau + 1.2));
+      setJoint('nShoulder',  -5 + 45 * Math.sin(tau));
+      setJoint('nElbow',     70 + 28 * Math.cos(tau));
+      setJoint('nWrist',     22 + 16 * Math.sin(tau + 1));
+      setJoint('fShoulder', -10 - 45 * Math.sin(tau));
+      setJoint('fElbow',     75 - 28 * Math.cos(tau));
+      setJoint('fWrist',     20 - 16 * Math.sin(tau + 1));
+      setJoint('neck', -12 + 5 * Math.sin(tau));
+      setJoint('jaw',   6 + 4 * Math.sin(tau * 2));
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  })();
 </script>
 </body>
 </html>
