@@ -393,6 +393,111 @@
   .gameover .play-again { background: #F44336; }
   .play-again:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(0,0,0,0.3); }
 
+  /* Ink bomb helper */
+  .ink-bomb-btn {
+    position: absolute;
+    right: 18px;
+    top: 130px;
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #8E24AA 0%, #4A148C 55%, #1A0033 100%);
+    border: 4px solid #013A63;
+    z-index: 15;
+    cursor: pointer;
+    box-shadow: 0 5px 0 #013A63, 0 0 18px rgba(142, 36, 170, 0.55);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 30px;
+    transition: transform 0.1s, box-shadow 0.1s, opacity 0.2s;
+    animation: inkBombPulse 1.8s ease-in-out infinite;
+  }
+  @keyframes inkBombPulse {
+    0%,100% { box-shadow: 0 5px 0 #013A63, 0 0 18px rgba(142, 36, 170, 0.55); }
+    50% { box-shadow: 0 5px 0 #013A63, 0 0 28px rgba(186, 104, 200, 0.9); }
+  }
+  .ink-bomb-btn:active {
+    transform: translateY(3px);
+    box-shadow: 0 2px 0 #013A63, 0 0 12px rgba(142, 36, 170, 0.4);
+  }
+  .ink-bomb-btn.disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    pointer-events: none;
+    animation: none;
+  }
+  .ink-bomb-count {
+    position: absolute;
+    top: -6px; right: -6px;
+    background: #FF4081; color: white;
+    border: 2px solid #013A63;
+    border-radius: 999px;
+    min-width: 22px; height: 22px;
+    padding: 0 4px;
+    font-family: 'Bowlby One', cursive;
+    font-size: 13px;
+    display: flex; align-items: center; justify-content: center;
+    line-height: 1;
+  }
+  .ink-bomb-label {
+    position: absolute;
+    top: 100%; left: 50%; transform: translateX(-50%);
+    margin-top: 4px;
+    font-family: 'Bowlby One', cursive;
+    font-size: 10px;
+    color: white;
+    text-shadow: 1px 1px 0 #013A63;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  /* Ink cloud spreading in the water */
+  .ink-cloud {
+    position: absolute;
+    pointer-events: none;
+    z-index: 7;
+    width: 260px; height: 260px;
+    transform: translate(-50%, -50%) scale(0.2);
+    opacity: 0;
+    filter: blur(2px);
+  }
+  .ink-cloud.spread {
+    animation: inkSpread 5s ease-out forwards;
+  }
+  @keyframes inkSpread {
+    0%   { transform: translate(-50%, -50%) scale(0.2); opacity: 0; }
+    15%  { transform: translate(-50%, -50%) scale(1); opacity: 0.95; }
+    70%  { transform: translate(-50%, -50%) scale(1.25); opacity: 0.85; }
+    100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+  }
+  .ink-blob {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #4A148C 0%, #1A0033 60%, #000 100%);
+    mix-blend-mode: multiply;
+  }
+
+  /* Godzilla confused effect */
+  .chase-godzilla.confused .godzilla-body {
+    animation: confusedWobble 0.8s ease-in-out infinite;
+  }
+  @keyframes confusedWobble {
+    0%,100% { transform: rotate(-12deg); }
+    50% { transform: rotate(12deg); }
+  }
+  .confused-marks {
+    position: absolute;
+    font-family: 'Bowlby One', cursive;
+    font-size: 26px;
+    color: #FFD93D;
+    text-shadow: 2px 2px 0 #013A63, 0 0 10px rgba(255, 217, 61, 0.7);
+    pointer-events: none;
+    z-index: 9;
+    animation: confusedFloat 1.2s ease-in-out infinite;
+  }
+  @keyframes confusedFloat {
+    0%,100% { transform: translateY(0) rotate(-8deg); }
+    50% { transform: translateY(-10px) rotate(8deg); }
+  }
+
   .treasure {
     position: absolute; right: -150px; top: 32%; transform: translateY(-50%);
     width: 100px; height: 80px;
@@ -637,6 +742,12 @@
     <path d="M 14 78 L 8 90 L 22 88 Z" fill="#FFA000" stroke="#013A63" stroke-width="2" stroke-linejoin="round"/>
   </svg>
 
+  <button class="ink-bomb-btn" id="inkBombBtn" onclick="useInkBomb()" aria-label="Ink Bomb">
+    🦑
+    <span class="ink-bomb-count" id="inkBombCount">3</span>
+    <span class="ink-bomb-label">INK BOMB</span>
+  </button>
+
   <div class="feedback" id="feedback"></div>
 
   <div class="question-panel hidden" id="questionPanel">
@@ -686,6 +797,8 @@
   const difficultyPick = document.getElementById('difficultyPick');
   const hint = document.getElementById('hint');
   const godzillaMarker = document.getElementById('godzillaMarker');
+  const inkBombBtn = document.getElementById('inkBombBtn');
+  const inkBombCountEl = document.getElementById('inkBombCount');
   const lightRays = document.getElementById('lightRays');
   const farLayer = document.getElementById('farLayer');
   const midLayer = document.getElementById('midLayer');
@@ -713,6 +826,10 @@
   let lastFrameTime = 0;
   let boostUntil = 0;
   let wrongAttempts = 0; // resets per question
+  let inkBombsLeft = 3;
+  let inkConfusedUntil = 0;
+  const INK_DURATION_MS = 5000;
+  const INK_BOMB_MAX = 3;
 
   // Background scroll offsets (negative => moving left)
   let scrollFar = 0;
@@ -806,8 +923,9 @@
       nearLayer.style.transform = `translateX(${scrollNear}px)`;
       lightRays.style.transform = `translateX(${scrollFar * 0.3}px)`;
 
-      // While the question is being shown (no boost), gap closes at constant rate.
-      if (!locked && !boosting) {
+      // While the question is being shown (no boost, no ink confusion), gap closes at constant rate.
+      const inkConfused = timestamp < inkConfusedUntil;
+      if (!locked && !boosting && !inkConfused) {
         currentGap -= GAP_DECAY_PER_SEC * dt;
         if (currentGap < 0) currentGap = 0;
         timeLeft = Math.max(0, currentGap * TIME_LIMIT);
@@ -1012,6 +1130,70 @@
     }
   }
 
+  function useInkBomb() {
+    if (!gameActive || inkBombsLeft <= 0) return;
+    if (performance.now() < inkConfusedUntil) return; // already confused
+
+    inkBombsLeft--;
+    inkBombCountEl.textContent = inkBombsLeft;
+    if (inkBombsLeft <= 0) inkBombBtn.classList.add('disabled');
+
+    inkConfusedUntil = performance.now() + INK_DURATION_MS;
+
+    // Place ink cloud at godzilla's current position
+    const godzillaRect = chaseGodzilla.getBoundingClientRect();
+    const gameRect = game.getBoundingClientRect();
+    const cx = godzillaRect.left - gameRect.left + godzillaRect.width / 2;
+    const cy = godzillaRect.top - gameRect.top + godzillaRect.height / 2;
+    spawnInkCloud(cx, cy);
+
+    // Confuse the godzilla visually + show "?!?"
+    chaseGodzilla.classList.add('confused');
+    const marks = document.createElement('div');
+    marks.className = 'confused-marks';
+    marks.textContent = '?!?';
+    marks.style.left = (cx - 20) + 'px';
+    marks.style.top = (cy - 80) + 'px';
+    game.appendChild(marks);
+
+    showFeedback('🦑 Splat!');
+
+    setTimeout(() => {
+      chaseGodzilla.classList.remove('confused');
+      marks.remove();
+    }, INK_DURATION_MS);
+  }
+
+  function spawnInkCloud(cx, cy) {
+    const cloud = document.createElement('div');
+    cloud.className = 'ink-cloud spread';
+    cloud.style.left = cx + 'px';
+    cloud.style.top = cy + 'px';
+
+    const blobConfig = [
+      { x: 50, y: 50, size: 200 },
+      { x: 25, y: 35, size: 110 },
+      { x: 70, y: 30, size: 130 },
+      { x: 30, y: 70, size: 120 },
+      { x: 75, y: 75, size: 140 },
+      { x: 50, y: 25, size: 90  },
+      { x: 15, y: 60, size: 80  },
+      { x: 85, y: 55, size: 95  }
+    ];
+    blobConfig.forEach(b => {
+      const blob = document.createElement('div');
+      blob.className = 'ink-blob';
+      blob.style.width = b.size + 'px';
+      blob.style.height = b.size + 'px';
+      blob.style.left = (b.x - b.size / 2 / 2.6) + '%';
+      blob.style.top = (b.y - b.size / 2 / 2.6) + '%';
+      cloud.appendChild(blob);
+    });
+
+    game.appendChild(cloud);
+    setTimeout(() => cloud.remove(), 5200);
+  }
+
   function endGame() {
     gameActive = false;
     locked = true;
@@ -1057,6 +1239,13 @@
     locked = false;
     lastFrameTime = 0;
     boostUntil = performance.now() + 600;
+
+    inkBombsLeft = INK_BOMB_MAX;
+    inkConfusedUntil = 0;
+    inkBombCountEl.textContent = inkBombsLeft;
+    inkBombBtn.classList.remove('disabled');
+    chaseGodzilla.classList.remove('confused');
+    document.querySelectorAll('.ink-cloud, .confused-marks').forEach(n => n.remove());
 
     setTimeout(showQuestion, 300);
   }
