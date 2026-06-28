@@ -172,8 +172,8 @@
   /* Submarine (fixed position on screen) */
   .submarine {
     position: absolute;
-    width: 81px; height: 99px;
-    left: 75%;
+    width: 150px; height: 58px;
+    left: 63%;
     top: 32%;
     z-index: 5;
     animation: swimBob 2s ease-in-out infinite;
@@ -221,6 +221,21 @@
     transition: left 0.4s ease-out;
     filter: drop-shadow(0 6px 12px rgba(0,0,0,0.4));
     overflow: visible;
+  }
+  /* 2024 "Godzilla x Kong" evolved look — hot-pink dorsal spines, purple-tinted hide,
+     pink eyes and pink atomic breath. Applied only on the Midnight Zone (decimals) level.
+     !important is required to override the per-rig palette set inline on #chaseGodzilla. */
+  .chase-godzilla.godzilla-2024 {
+    --skin-dark: #0c0a10 !important;
+    --skin-mid: #221a2b !important;
+    --skin-light: #382a44 !important;
+    --belly: #221a2b !important;
+    --belly-shadow: #0c0a10 !important;
+    --spine: #d11f7a !important;
+    --spine-tip: #ff66c4 !important;
+    --eye: #ff5db4 !important;
+    --breath-core: #fff0fb !important;
+    --breath-edge: #ff3fb0 !important;
   }
   .chase-godzilla.lunge { animation: lunge 0.5s ease-in; }
   @keyframes lunge {
@@ -802,7 +817,7 @@
     .hint { font-size: 11px; margin-bottom: 4px; }
     .answers-grid { gap: 6px; }
     .answer-btn { font-size: 20px; padding: 6px 0; box-shadow: 0 3px 0 #013A63; }
-    .submarine { width: 63px; height: 77px; }
+    .submarine { width: 116px; height: 45px; }
     .chase-godzilla { width: 170px; height: 96px; }
     .helpers { bottom: 220px; }
   }
@@ -929,9 +944,9 @@
         <stop offset="1" stop-color="#0d0d0d"></stop>
       </linearGradient>
       <radialGradient id="beamGlow" cx=".5" cy=".5" r=".5">
-        <stop offset="0" stop-color="#e8f9ff" stop-opacity="1"></stop>
-        <stop offset=".4" stop-color="#6ce8ff" stop-opacity=".9"></stop>
-        <stop offset="1" stop-color="#6ce8ff" stop-opacity="0"></stop>
+        <stop offset="0" stop-color="var(--breath-core,#e8f9ff)" stop-opacity="1"></stop>
+        <stop offset=".4" stop-color="var(--breath-edge,#6ce8ff)" stop-opacity=".9"></stop>
+        <stop offset="1" stop-color="var(--breath-edge,#6ce8ff)" stop-opacity="0"></stop>
       </radialGradient>
       <linearGradient id="waterFill" x1="0" x2="0" y1="0" y2="1">
         <stop offset="0" stop-color="#6ce8ff" stop-opacity=".42"></stop>
@@ -1431,40 +1446,93 @@
     </g>
   </svg>
 
-  <svg class="submarine" id="submarine" viewBox="0 0 90 110" style="transform: translateY(-50%);">
-    <g class="tail-wave">
-      <circle cx="10" cy="55" r="2.5" fill="#B3E5FC" opacity="0.7"/>
-      <circle cx="4" cy="62" r="2" fill="#B3E5FC" opacity="0.5"/>
-      <circle cx="8" cy="72" r="3" fill="#B3E5FC" opacity="0.6"/>
-      <circle cx="2" cy="50" r="1.5" fill="#B3E5FC" opacity="0.5"/>
-      <g transform="translate(18,65)">
-        <circle cx="0" cy="0" r="7" fill="#90A4AE" stroke="#013A63" stroke-width="2"/>
-        <ellipse cx="0" cy="0" rx="2" ry="7" fill="#546E7A" stroke="#013A63" stroke-width="1.5"/>
-        <ellipse cx="0" cy="0" rx="7" ry="2" fill="#546E7A" stroke="#013A63" stroke-width="1.5"/>
-        <circle cx="0" cy="0" r="1.8" fill="#263238"/>
-      </g>
-    </g>
-    <rect x="42" y="12" width="6" height="22" fill="#455A64" stroke="#013A63" stroke-width="2"/>
-    <rect x="36" y="8" width="16" height="8" fill="#455A64" stroke="#013A63" stroke-width="2" rx="2"/>
-    <rect x="48" y="10" width="6" height="4" fill="#FFD93D" stroke="#013A63" stroke-width="1"/>
-    <rect x="30" y="32" width="30" height="20" fill="#FFC107" stroke="#013A63" stroke-width="2.5" rx="5"/>
-    <rect x="34" y="37" width="6" height="6" fill="#81D4FA" stroke="#013A63" stroke-width="1.5" rx="1"/>
-    <rect x="50" y="37" width="6" height="6" fill="#81D4FA" stroke="#013A63" stroke-width="1.5" rx="1"/>
-    <ellipse cx="46" cy="65" rx="38" ry="18" fill="#FFC107" stroke="#013A63" stroke-width="2.5"/>
-    <ellipse cx="46" cy="55" rx="30" ry="3" fill="#FFE082" opacity="0.8"/>
-    <path d="M 12 72 Q 46 78 80 72" stroke="#013A63" stroke-width="1.5" fill="none" opacity="0.35"/>
-    <circle cx="26" cy="64" r="5" fill="#81D4FA" stroke="#013A63" stroke-width="2"/>
-    <circle cx="27" cy="63" r="1.5" fill="white" opacity="0.85"/>
-    <circle cx="46" cy="66" r="5" fill="#81D4FA" stroke="#013A63" stroke-width="2"/>
-    <circle cx="47" cy="65" r="1.5" fill="white" opacity="0.85"/>
-    <circle cx="64" cy="64" r="5" fill="#81D4FA" stroke="#013A63" stroke-width="2"/>
-    <circle cx="65" cy="63" r="1.5" fill="white" opacity="0.85"/>
-    <path d="M 82 65 Q 86 60 86 65 Q 86 70 82 65 Z" fill="#FFA000" stroke="#013A63" stroke-width="2"/>
-    <circle cx="80" cy="65" r="3.5" fill="#FFEB3B" stroke="#013A63" stroke-width="1.5"/>
-    <circle cx="80" cy="65" r="1.8" fill="white"/>
-    <path d="M 46 83 L 38 96 L 54 96 Z" fill="#FFA000" stroke="#013A63" stroke-width="2" stroke-linejoin="round"/>
-    <path d="M 14 78 L 8 90 L 22 88 Z" fill="#FFA000" stroke="#013A63" stroke-width="2" stroke-linejoin="round"/>
-  </svg>
+  <svg class="submarine" id="submarine" viewBox="0 0 620 240" style="transform: translateY(-50%); overflow: visible;">
+          <defs>
+            <linearGradient id="mHullGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#3a444e"></stop>
+              <stop offset="45%" stop-color="#1d232a"></stop>
+              <stop offset="100%" stop-color="#0b0e11"></stop>
+            </linearGradient>
+            <linearGradient id="mSailGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#323c46"></stop>
+              <stop offset="100%" stop-color="#0f131a"></stop>
+            </linearGradient>
+            <linearGradient id="mDeckGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#333d47"></stop>
+              <stop offset="100%" stop-color="#141a22"></stop>
+            </linearGradient>
+            <linearGradient id="mPropGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#3a3f45"></stop>
+              <stop offset="100%" stop-color="#0a0c0e"></stop>
+            </linearGradient>
+            <linearGradient id="mFlame" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#fff2a8"></stop>
+              <stop offset="55%" stop-color="#ff9b2f"></stop>
+              <stop offset="100%" stop-color="#ff5a2a" stop-opacity="0"></stop>
+            </linearGradient>
+            <radialGradient id="mGlow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#ffe39a" stop-opacity="0.85"></stop>
+              <stop offset="100%" stop-color="#ffe39a" stop-opacity="0"></stop>
+            </radialGradient>
+          </defs>
+          <rect x="40" y="143" width="26" height="10" rx="3" fill="#2b323a"></rect>
+          <g transform="translate(40,148)">
+            <ellipse rx="13" ry="26" fill="#0c0f12"></ellipse>
+            <ellipse rx="13" ry="26" fill="none" stroke="#3a444e" stroke-width="2"></ellipse>
+            <ellipse cx="-2" rx="9" ry="21" fill="#05070a"></ellipse>
+            <g stroke="#272d34" stroke-width="2.4" stroke-linecap="round">
+              <line x1="-2" y1="0" x2="-2" y2="-20"></line>
+              <line x1="-2" y1="0" x2="15" y2="-12"></line>
+              <line x1="-2" y1="0" x2="15" y2="12"></line>
+              <line x1="-2" y1="0" x2="-2" y2="20"></line>
+              <line x1="-2" y1="0" x2="-17" y2="-12"></line>
+              <line x1="-2" y1="0" x2="-17" y2="12"></line>
+            </g>
+            <circle cx="-2" r="4.5" fill="#15181b"></circle>
+            <circle cx="-2" r="2" fill="#2e3338"></circle>
+          </g>
+          <polygon points="62,122 48,94 84,116" fill="#2c333b"></polygon>
+          <polygon points="62,174 48,202 84,180" fill="#222931"></polygon>
+          <path d="M 48 148 C 68 128 100 117 145 117 L 488 117 C 542 117 580 128 588 148 C 580 168 542 179 488 179 L 145 179 C 100 179 68 168 48 148 Z" fill="url(#mHullGrad)"></path>
+          <path d="M 90 142 L 560 142" stroke="#283038" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.6"></path>
+          <path d="M 90 159 L 490 159" stroke="#1c222a" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.6"></path>
+          <g fill="#161b21" opacity="0.85">
+            <rect x="110" y="165" width="17" height="7" rx="3"></rect>
+            <rect x="139" y="165" width="17" height="7" rx="3"></rect>
+            <rect x="490" y="165" width="17" height="7" rx="3"></rect>
+            <rect x="519" y="165" width="17" height="7" rx="3"></rect>
+          </g>
+          <circle cx="566" cy="135" r="8" fill="#2a3139" stroke="#171c22" stroke-width="2"></circle>
+          <circle cx="566" cy="135" r="2.5" fill="#171c22"></circle>
+          <circle cx="568" cy="161" r="8" fill="#2a3139" stroke="#171c22" stroke-width="2"></circle>
+          <circle cx="568" cy="161" r="2.5" fill="#171c22"></circle>
+          <path d="M 556 120 C 574 127 581 137 581 148 C 581 159 574 169 556 176" fill="none" stroke="#090c0f" stroke-width="2" opacity="0.55"></path>
+          <path d="M 258 119 Q 266 99 300 98 L 452 98 Q 486 99 494 119 Z" fill="url(#mDeckGrad)"></path>
+          <path d="M 300 100 L 452 100" stroke="#1b2127" stroke-width="1.5" opacity="0.5"></path>
+          <g>
+            <circle cx="300" cy="105" r="7.5" fill="#222a31" stroke="#161b21" stroke-width="1.5"></circle><line x1="293" y1="105" x2="307" y2="105" stroke="#161b21" stroke-width="1"></line>
+            <circle cx="322" cy="104" r="7.5" fill="#222a31" stroke="#161b21" stroke-width="1.5"></circle><line x1="315" y1="104" x2="329" y2="104" stroke="#161b21" stroke-width="1"></line>
+            <circle cx="344" cy="103" r="7.5" fill="#222a31" stroke="#161b21" stroke-width="1.5"></circle><line x1="337" y1="103" x2="351" y2="103" stroke="#161b21" stroke-width="1"></line>
+              <circle cx="366" cy="103" r="7.5" fill="#222a31" stroke="#161b21" stroke-width="1.5"></circle><line x1="359" y1="103" x2="373" y2="103" stroke="#161b21" stroke-width="1"></line>
+            <circle cx="388" cy="103" r="7.5" fill="#222a31" stroke="#161b21" stroke-width="1.5"></circle><line x1="381" y1="103" x2="395" y2="103" stroke="#161b21" stroke-width="1"></line>
+            <circle cx="410" cy="104" r="7.5" fill="#222a31" stroke="#161b21" stroke-width="1.5"></circle><line x1="403" y1="104" x2="417" y2="104" stroke="#161b21" stroke-width="1"></line>
+            <circle cx="432" cy="105" r="7.5" fill="#222a31" stroke="#161b21" stroke-width="1.5"></circle><line x1="425" y1="105" x2="439" y2="105" stroke="#161b21" stroke-width="1"></line>
+            <circle cx="454" cy="106" r="7.5" fill="#222a31" stroke="#161b21" stroke-width="1.5"></circle><line x1="447" y1="106" x2="461" y2="106" stroke="#161b21" stroke-width="1"></line>
+          </g>
+          <path d="M 166 119 C 167 95 171 73 187 67 L 214 67 C 230 71 241 95 246 119 Z" fill="url(#mSailGrad)"></path>
+          <rect x="198" y="40" width="5" height="28" rx="2" fill="#181d23"></rect>
+          <rect x="188" y="46" width="4" height="22" rx="2" fill="#14191e"></rect>
+          <rect x="152" y="88" width="92" height="8" rx="4" fill="#1a2026"></rect>
+          <rect x="182" y="76" width="22" height="8" rx="2.5" fill="#10141a"></rect>
+            <g>
+              <ellipse cx="193" cy="80" rx="32" ry="18" fill="url(#mGlow)"></ellipse>
+              <rect x="182" y="76" width="22" height="8" rx="2.5" fill="#ffd874"></rect>
+              <circle cx="242" cy="86" r="8" fill="url(#mGlow)"></circle>
+              <circle cx="242" cy="86" r="3.3" fill="#7CFC7C"></circle>
+              <circle cx="578" cy="148" r="9" fill="url(#mGlow)"></circle>
+              <circle cx="578" cy="148" r="3.2" fill="#ff6b5e"></circle>
+            </g>
+        </svg>
 
   <div class="helpers">
     <button class="eject-btn" id="ejectBtn" onclick="useEject()" aria-label="Eject Diver">
@@ -2258,6 +2326,9 @@
     scoreEl.textContent = 0;
     levelNumEl.textContent = 1;
     progressFill.style.width = '0%';
+
+    // Midnight Zone (decimals) gets the 2024 "Godzilla x Kong" look — hot-pink spines + pink breath.
+    chaseGodzilla.classList.toggle('godzilla-2024', diff === 'decimal');
 
     if (diff === 'decimal') hint.textContent = '🌑 Decimals! Add the tenths — solve quick!';
     else if (diff === 'hard') hint.textContent = '🐙 Two-digit! Godzilla is fast — solve quick!';
