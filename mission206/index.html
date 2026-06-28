@@ -783,6 +783,7 @@
   .diff-btn.easy { background: #C5E99B; }
   .diff-btn.medium { background: #FFD6A5; }
   .diff-btn.hard { background: #FFB7C5; }
+  .diff-btn.decimal { background: #C9B6E4; }
 
   /* Compact layout for short viewports (most phones in portrait) */
   @media (max-height: 780px) {
@@ -874,6 +875,10 @@
       🐙 Deep Sea
       <small>Two-digit sums!</small>
     </button>
+    <button class="diff-btn decimal" onclick="startGame('decimal')">
+      🌑 Midnight Zone
+      <small>Decimal sums!</small>
+    </button>
   </div>
 
   <div class="light-rays" id="lightRays"></div>
@@ -882,7 +887,7 @@
   <div class="scroll-layer" id="nearLayer"></div>
 
   <div class="hud">
-    <div class="level-badge">🌊 <span id="levelNum">1</span>/9</div>
+    <div class="level-badge">🌊 <span id="levelNum">1</span>/8</div>
     <div class="pearls">🦪 <span id="score">0</span></div>
   </div>
   <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
@@ -1546,7 +1551,7 @@
 
   // ============ Game constants ============
   const TIME_LIMIT = 20;             // seconds for godzilla to catch submarine
-  const TOTAL_LEVELS = 9;
+  const TOTAL_LEVELS = 8;
   // currentGap: 1.0 = full initial distance, 0 = godzilla caught up.
   // Godzilla closes at exactly 1/20 per second → 20s to close from 1.0 to 0.
   const INITIAL_GAP = 1.0;
@@ -1709,6 +1714,7 @@
 
   // ============ Question generation ============
   function generateQuestion() {
+    if (difficulty === 'decimal') { generateDecimalQuestion(); return; }
     let a, b;
     if (difficulty === 'easy') {
       a = Math.floor(Math.random() * 5) + 1;
@@ -1745,6 +1751,33 @@
       const btn = document.createElement('button');
       btn.className = 'answer-btn';
       btn.textContent = val;
+      btn.onclick = () => handleAnswer(val, btn);
+      answersGrid.appendChild(btn);
+    });
+  }
+
+  // Decimal level: work in tenths internally so sums stay exact, display 1 d.p.
+  function generateDecimalQuestion() {
+    const aT = Math.floor(Math.random() * 90) + 10; // tenths 10..99 → 1.0..9.9
+    const bT = Math.floor(Math.random() * 90) + 10;
+    const sumT = aT + bT;
+    correctAnswer = sumT / 10;
+    num1El.textContent = (aT / 10).toFixed(1);
+    num2El.textContent = (bT / 10).toFixed(1);
+
+    const choiceTenths = new Set([sumT]);
+    while (choiceTenths.size < 4) {
+      const offset = Math.floor(Math.random() * 11) - 5; // ±0.5
+      const candidate = sumT + offset;
+      if (candidate > 0 && candidate !== sumT) choiceTenths.add(candidate);
+    }
+    const shuffled = [...choiceTenths].sort(() => Math.random() - 0.5);
+    answersGrid.innerHTML = '';
+    shuffled.forEach(t => {
+      const val = t / 10;
+      const btn = document.createElement('button');
+      btn.className = 'answer-btn';
+      btn.textContent = val.toFixed(1);
       btn.onclick = () => handleAnswer(val, btn);
       answersGrid.appendChild(btn);
     });
@@ -1804,7 +1837,7 @@
       // Only reveal the correct answer after the SECOND wrong attempt
       if (wrongAttempts >= 2) {
         [...answersGrid.children].forEach(b => {
-          if (parseInt(b.textContent) === correctAnswer) b.classList.add('correct');
+          if (Math.abs(parseFloat(b.textContent) - correctAnswer) < 0.001) b.classList.add('correct');
         });
       }
 
@@ -2226,7 +2259,8 @@
     levelNumEl.textContent = 1;
     progressFill.style.width = '0%';
 
-    if (diff === 'hard') hint.textContent = '🐙 Two-digit! Godzilla is fast — solve quick!';
+    if (diff === 'decimal') hint.textContent = '🌑 Decimals! Add the tenths — solve quick!';
+    else if (diff === 'hard') hint.textContent = '🐙 Two-digit! Godzilla is fast — solve quick!';
     else if (diff === 'medium') hint.textContent = '🐠 Solve fast — godzilla behind you!';
     else hint.textContent = '🌊 Solve to swim faster than the godzilla!';
 
