@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Marymaid's Multiplication Adventure</title>
+<title>Marymaid's Math Adventure</title>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Bowlby+One&display=swap" rel="stylesheet">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -211,10 +211,10 @@
     50% { transform: rotate(8deg); }
   }
 
-  /* Chasing octopus */
+  /* Chasing shark */
   .chase-shark {
     position: absolute;
-    width: 170px; height: 122px;
+    width: 150px; height: 80px;
     top: 32%;
     transform: translateY(-50%);
     z-index: 6;
@@ -228,20 +228,17 @@
     100% { transform: translateY(-50%) scale(1); }
   }
   .shark-body {
-    animation: octoFloat 1.5s ease-in-out infinite;
-    transform-origin: 50% 50%;
+    animation: sharkSwim 0.4s ease-in-out infinite;
+    transform-origin: 30% 50%;
   }
-  @keyframes octoFloat {
-    0%,100% { transform: translateY(0) rotate(-2deg); }
-    50% { transform: translateY(-6px) rotate(2deg); }
+  @keyframes sharkSwim {
+    0%,100% { transform: rotate(-2deg); }
+    50% { transform: rotate(2deg); }
   }
-  .shark-tail-fin {
-    animation: tentacleWave 0.8s ease-in-out infinite;
-    transform-origin: 40px 65px;
-  }
-  @keyframes tentacleWave {
-    0%,100% { transform: rotate(-6deg) translateX(0); }
-    50% { transform: rotate(6deg) translateX(-4px); }
+  .shark-tail-fin { animation: sharkTail 0.3s ease-in-out infinite; transform-origin: 0% 50%; }
+  @keyframes sharkTail {
+    0%,100% { transform: rotate(-15deg); }
+    50% { transform: rotate(15deg); }
   }
 
   /* Question panel */
@@ -400,9 +397,9 @@
   .diff-btn {
     width: 100%; max-width: 280px;
     background: white; border: 4px solid #013A63;
-    border-radius: 22px; padding: 18px;
-    font-family: 'Bowlby One', cursive; font-size: 22px;
-    color: #013A63; margin-bottom: 14px;
+    border-radius: 22px; padding: 14px;
+    font-family: 'Bowlby One', cursive; font-size: 20px;
+    color: #013A63; margin-bottom: 12px;
     cursor: pointer; box-shadow: 0 6px 0 #013A63;
   }
   .diff-btn small { display: block; font-family: 'Fredoka', sans-serif; font-size: 14px; font-weight: 600; margin-top: 4px; }
@@ -410,6 +407,12 @@
   .diff-btn.easy { background: #C5E99B; }
   .diff-btn.medium { background: #FFD6A5; }
   .diff-btn.hard { background: #FFB7C5; }
+  .diff-btn.expert { background: #D7C4FF; }
+  @media (max-height: 640px) {
+    .difficulty-pick h1 { font-size: 26px; }
+    .difficulty-pick .subtitle { margin-bottom: 14px; }
+    .diff-btn { padding: 10px; font-size: 18px; margin-bottom: 8px; }
+  }
 
   /* Compact layout for short viewports (most phones in portrait) */
   @media (max-height: 780px) {
@@ -437,19 +440,23 @@
 <div class="game" id="game">
 
   <div class="difficulty-pick" id="difficultyPick">
-    <h1>🧜‍♀️ Marymaid's<br/>Times-Tables Adventure</h1>
-    <p class="subtitle">Swim away from the octopus!<br/>Solve multiplication to escape!</p>
-    <button class="diff-btn easy" onclick="startGame('easy')">
-      🌊 Tiny Tides
-      <small>×1, ×2, ×5, ×10</small>
+    <h1>🧜‍♀️ Marymaid's<br/>Math Adventure</h1>
+    <p class="subtitle">Swim away from the shark!<br/>Add and subtract to escape!</p>
+    <button class="diff-btn easy" onclick="startGame(1)">
+      🌊 Level 1: Splash Pool
+      <small>1-digit sums</small>
     </button>
-    <button class="diff-btn medium" onclick="startGame('medium')">
-      🐠 Coral Reef
-      <small>×1 through ×6</small>
+    <button class="diff-btn medium" onclick="startGame(2)">
+      🐠 Level 2: Coral Reef
+      <small>1-digit + and −</small>
     </button>
-    <button class="diff-btn hard" onclick="startGame('hard')">
-      🐙 Deep Sea
-      <small>×1 through ×12</small>
+    <button class="diff-btn hard" onclick="startGame(3)">
+      🐢 Level 3: Kelp Forest
+      <small>2-digit sums</small>
+    </button>
+    <button class="diff-btn expert" onclick="startGame(4)">
+      🐙 Level 4: Deep Sea
+      <small>2-digit + and −</small>
     </button>
   </div>
 
@@ -464,7 +471,7 @@
   </div>
   <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
   <div class="distance-track">
-    <div class="shark-marker" id="sharkMarker">🐙</div>
+    <div class="shark-marker" id="sharkMarker">🦈</div>
     <div class="maid-marker">🧜‍♀️</div>
   </div>
 
@@ -489,72 +496,28 @@
     <circle cx="50" cy="22" r="5" fill="#FFD93D" stroke="#3E2723" stroke-width="1.5"/>
   </svg>
 
-  <svg class="chase-shark" id="chaseShark" viewBox="-30 0 180 130" style="left: -150px;">
-    <defs>
-      <radialGradient id="octoBody" cx="50%" cy="40%" r="60%">
-        <stop offset="0%" stop-color="#C065D8"/>
-        <stop offset="60%" stop-color="#9C27B0"/>
-        <stop offset="100%" stop-color="#6A1B9A"/>
-      </radialGradient>
-      <linearGradient id="tentacle" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#9C27B0"/>
-        <stop offset="100%" stop-color="#6A1B9A"/>
-      </linearGradient>
-    </defs>
+  <svg class="chase-shark" id="chaseShark" viewBox="-20 0 150 80" style="left: -150px;">
     <g class="shark-body">
-      <!-- Trailing tentacles (left side, since octopus chases from behind) -->
       <g class="shark-tail-fin">
-        <!-- 8 wavy tentacles fanning out left/back -->
-        <path d="M 40 55 Q 10 50 -15 35 Q -5 45 -20 30" stroke="url(#tentacle)" stroke-width="9" fill="none" stroke-linecap="round"/>
-        <path d="M 40 60 Q 5 65 -20 55 Q -5 60 -25 50" stroke="url(#tentacle)" stroke-width="10" fill="none" stroke-linecap="round"/>
-        <path d="M 40 65 Q 0 75 -22 75 Q -5 75 -25 70" stroke="url(#tentacle)" stroke-width="10" fill="none" stroke-linecap="round"/>
-        <path d="M 40 70 Q 5 85 -18 95 Q -3 88 -22 95" stroke="url(#tentacle)" stroke-width="9" fill="none" stroke-linecap="round"/>
-        <path d="M 42 72 Q 18 95 5 115 Q 15 100 0 118" stroke="url(#tentacle)" stroke-width="9" fill="none" stroke-linecap="round"/>
-        <path d="M 48 75 Q 35 100 25 120 Q 32 105 20 122" stroke="url(#tentacle)" stroke-width="8" fill="none" stroke-linecap="round"/>
-        <path d="M 55 75 Q 50 105 45 122 Q 50 108 42 124" stroke="url(#tentacle)" stroke-width="8" fill="none" stroke-linecap="round"/>
-        <path d="M 62 72 Q 65 100 65 120 Q 65 105 62 124" stroke="url(#tentacle)" stroke-width="7" fill="none" stroke-linecap="round"/>
-
-        <!-- Suction cup dots on a few tentacles -->
-        <circle cx="-5" cy="40" r="1.8" fill="#FF80AB"/>
-        <circle cx="5" cy="48" r="1.8" fill="#FF80AB"/>
-        <circle cx="-10" cy="58" r="1.8" fill="#FF80AB"/>
-        <circle cx="-5" cy="72" r="1.8" fill="#FF80AB"/>
-        <circle cx="10" cy="92" r="1.8" fill="#FF80AB"/>
-        <circle cx="30" cy="108" r="1.8" fill="#FF80AB"/>
+        <path d="M 0 40 Q -12 25 -18 8 Q -8 18 0 32 Q -8 48 -18 72 Q -12 55 0 40 Z"
+              fill="#455A64" stroke="#1A2327" stroke-width="2.5" stroke-linejoin="round"/>
       </g>
-
-      <!-- Octopus body/head (dome shape) -->
-      <ellipse cx="80" cy="50" rx="42" ry="38" fill="url(#octoBody)" stroke="#3E0F50" stroke-width="2.5"/>
-
-      <!-- Belly highlight -->
-      <ellipse cx="80" cy="65" rx="28" ry="15" fill="#D896E8" opacity="0.5"/>
-
-      <!-- Head highlight -->
-      <ellipse cx="68" cy="32" rx="14" ry="10" fill="#E1AAEF" opacity="0.6"/>
-
-      <!-- Right eye (front-facing as octopus chases right) -->
-      <ellipse cx="100" cy="42" rx="9" ry="11" fill="white" stroke="#3E0F50" stroke-width="2"/>
-      <ellipse cx="102" cy="44" rx="5.5" ry="7" fill="#1A0030"/>
-      <circle cx="104" cy="41" r="2" fill="white"/>
-      <circle cx="100" cy="46" r="1" fill="white"/>
-
-      <!-- Left eye -->
-      <ellipse cx="78" cy="40" rx="8" ry="10" fill="white" stroke="#3E0F50" stroke-width="2"/>
-      <ellipse cx="80" cy="42" rx="5" ry="6.5" fill="#1A0030"/>
-      <circle cx="82" cy="39" r="1.8" fill="white"/>
-      <circle cx="78" cy="44" r="0.9" fill="white"/>
-
-      <!-- Eyebrows (slightly angry/determined) -->
-      <path d="M 70 28 Q 78 25 86 30" stroke="#3E0F50" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-      <path d="M 92 29 Q 100 26 109 31" stroke="#3E0F50" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-
-      <!-- Cheeks -->
-      <ellipse cx="62" cy="58" rx="5" ry="3.5" fill="#FF7AA8" opacity="0.6"/>
-      <ellipse cx="115" cy="58" rx="5" ry="3.5" fill="#FF7AA8" opacity="0.6"/>
-
-      <!-- Mouth (small O, hungry!) -->
-      <ellipse cx="90" cy="62" rx="4" ry="5" fill="#3E0F50"/>
-      <ellipse cx="90" cy="60" rx="2" ry="2.5" fill="#FF4081"/>
+      <path d="M 0 40 Q 5 22 35 18 Q 75 14 105 30 Q 115 35 120 40 Q 115 45 105 50 Q 75 66 35 62 Q 5 58 0 40 Z"
+            fill="#546E7A" stroke="#1A2327" stroke-width="2.5"/>
+      <path d="M 30 50 Q 60 60 100 48 Q 70 56 30 50 Z" fill="#B0BEC5" opacity="0.7"/>
+      <path d="M 50 18 L 60 4 L 70 20 Z" fill="#455A64" stroke="#1A2327" stroke-width="2.5" stroke-linejoin="round"/>
+      <path d="M 55 50 L 65 65 L 75 52 Z" fill="#455A64" stroke="#1A2327" stroke-width="2.5" stroke-linejoin="round"/>
+      <path d="M 80 32 Q 82 38 80 44" stroke="#1A2327" stroke-width="1.8" fill="none"/>
+      <path d="M 86 32 Q 88 38 86 44" stroke="#1A2327" stroke-width="1.8" fill="none"/>
+      <circle cx="105" cy="34" r="4" fill="white"/>
+      <circle cx="106" cy="35" r="2.5" fill="#1A2327"/>
+      <circle cx="107" cy="34" r="0.8" fill="white"/>
+      <path d="M 100 28 L 110 30" stroke="#1A2327" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M 95 46 Q 110 50 122 44" stroke="#1A2327" stroke-width="2.5" fill="#1A2327"/>
+      <polygon points="100,46 102,52 104,46" fill="white" stroke="#1A2327" stroke-width="1"/>
+      <polygon points="106,47 108,53 110,47" fill="white" stroke="#1A2327" stroke-width="1"/>
+      <polygon points="112,47 114,52 116,47" fill="white" stroke="#1A2327" stroke-width="1"/>
+      <polygon points="118,46 120,51 122,46" fill="white" stroke="#1A2327" stroke-width="1"/>
     </g>
   </svg>
 
@@ -594,10 +557,10 @@
   <div class="feedback" id="feedback"></div>
 
   <div class="question-panel hidden" id="questionPanel">
-    <div class="hint" id="hint">🌊 Solve before the octopus catches you!</div>
+    <div class="hint" id="hint">🌊 Solve before the shark catches you!</div>
     <div class="equation">
       <span id="num1">2</span>
-      <span>×</span>
+      <span id="opEl">+</span>
       <span id="num2">3</span>
       <span>=</span>
       <span class="qmark">?</span>
@@ -607,13 +570,13 @@
 
   <div class="winscreen" id="winscreen">
     <h1>🎉 Treasure!</h1>
-    <p>Marymaid escaped the octopus<br/>and found the treasure!<br/>You earned <span id="finalScore">0</span> pearls! 🦪</p>
+    <p>Marymaid escaped the shark<br/>and found the treasure!<br/>You earned <span id="finalScore">0</span> pearls! 🦪</p>
     <button class="play-again" onclick="resetGame()">Play Again</button>
   </div>
 
   <div class="gameover" id="gameover">
-    <h1>🐙 Oh no!</h1>
-    <p>The octopus caught Marymaid!<br/>You collected <span id="gameOverScore">0</span> pearls.<br/><br/>Solve faster next time! 💨</p>
+    <h1>🦈 Oh no!</h1>
+    <p>The shark caught Marymaid!<br/>You collected <span id="gameOverScore">0</span> pearls.<br/><br/>Solve faster next time! 💨</p>
     <button class="play-again" onclick="resetGame()">Try Again</button>
   </div>
 
@@ -628,6 +591,7 @@
   const questionPanel = document.getElementById('questionPanel');
   const num1El = document.getElementById('num1');
   const num2El = document.getElementById('num2');
+  const opEl = document.getElementById('opEl');
   const answersGrid = document.getElementById('answersGrid');
   const scoreEl = document.getElementById('score');
   const levelNumEl = document.getElementById('levelNum');
@@ -657,10 +621,10 @@
 
   // ============ State ============
   let score = 0;
-  let level = 1;
+  let round = 1;              // question number within the run
   let correctAnswer = 0;
   let locked = false;
-  let difficulty = 'easy';
+  let stage = 1;              // chosen level 1-4
   let gameActive = false;
   let currentGap = INITIAL_GAP;
   let timeLeft = TIME_LIMIT;
@@ -781,9 +745,9 @@
         }
         timerRing.style.strokeDashoffset = (1 - currentGap) * CIRC;
 
-        // Position octopus: from SHARK_FAR_LEFT (gap=1) → close behind marymaid (gap=0)
+        // Position shark: from SHARK_FAR_LEFT (gap=1) → close behind marymaid (gap=0)
         const marymaidPx = w * MARYMAID_LEFT_PCT;
-        const sharkNearPx = marymaidPx - 120;
+        const sharkNearPx = marymaidPx - 90;
         const sharkLeft = SHARK_FAR_LEFT + (sharkNearPx - SHARK_FAR_LEFT) * (1 - currentGap);
         chaseShark.style.left = sharkLeft + 'px';
         sharkMarker.style.left = (4 + (90 - 4) * (1 - currentGap)) + '%';
@@ -795,64 +759,105 @@
     requestAnimationFrame(gameLoop);
   }
 
+  // ============ Levels ============
+  const STAGES = {
+    1: { gens: [genAdd1], hint: '🌊 Add to swim faster than the shark!' },
+    2: { gens: [genAdd1, genSub1], hint: '🐠 Add or subtract — shark behind you!' },
+    3: { gens: [genAdd2], hint: '🐢 Two-digit sums! Solve quick!' },
+    4: { gens: [genAdd2, genSub2], hint: '🐙 Two-digit + and −! Shark is fast!' },
+  };
+
   // ============ Question generation ============
-  function generateQuestion() {
-    let a, b;
-    if (difficulty === 'easy') {
-      // Easy tables: ×1, ×2, ×5, ×10 (the "starter" times tables)
-      const easyTables = [1, 2, 5, 10];
-      a = easyTables[Math.floor(Math.random() * easyTables.length)];
-      b = Math.floor(Math.random() * 10) + 1; // 1-10
-      // Randomly swap order so they see "5 × 3" and "3 × 5"
-      if (Math.random() < 0.5) [a, b] = [b, a];
-    } else if (difficulty === 'medium') {
-      // ×1 through ×6
-      a = Math.floor(Math.random() * 6) + 1;
-      b = Math.floor(Math.random() * 10) + 1;
-      if (Math.random() < 0.5) [a, b] = [b, a];
+  const rnd = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+  const norm = v => Math.round(v * 10) / 10;   // 1-decimal normalisation for safe comparisons
+  const fmt = (v, dec) => dec ? v.toFixed(1) : String(v);
+
+  // Every generator returns { a, b, op, answer, decimal }
+  // 1-digit
+  function genAdd1() { const a = rnd(1, 9), b = rnd(1, 9); return { a, b, op: '+', answer: a + b }; }
+  function genSub1() { const a = rnd(1, 9), b = rnd(1, a); return { a, b, op: '−', answer: a - b }; }
+  // up to 2-digit (ranges grow with the round)
+  function genAdd2() {
+    const [lo, hi] = round <= 3 ? [5, 19] : round <= 6 ? [10, 34] : [15, 54];
+    const a = rnd(lo, hi), b = rnd(lo, hi);
+    return { a, b, op: '+', answer: a + b };
+  }
+  function genSub2() {
+    const [lo, hi] = round <= 3 ? [10, 30] : round <= 6 ? [15, 60] : [20, 99];
+    const a = rnd(lo, hi), b = rnd(1, a - 1);
+    return { a, b, op: '−', answer: a - b };
+  }
+  // times tables ×1..×12 (top factor grows with the round)
+  function genMulTables() {
+    const maxFactor = Math.min(12, 6 + Math.floor(round / 2));
+    let a = rnd(1, maxFactor), b = rnd(1, 12);
+    if (Math.random() < 0.5) [a, b] = [b, a];
+    return { a, b, op: '×', answer: a * b };
+  }
+  // 1-digit × and ÷
+  function genMul1() { const a = rnd(2, 9), b = rnd(2, 9); return { a, b, op: '×', answer: a * b }; }
+  function genDiv1() { const b = rnd(2, 9), q = rnd(1, 9); return { a: b * q, b, op: '÷', answer: q }; }
+  // 2-digit × and ÷ (2-digit by 1-digit)
+  function genMul2() {
+    let a = rnd(11, 25), b = rnd(2, 9);
+    if (Math.random() < 0.5) [a, b] = [b, a];
+    return { a, b, op: '×', answer: a * b };
+  }
+  function genDiv2() { const b = rnd(2, 9), q = rnd(10, 25); return { a: b * q, b, op: '÷', answer: q }; }
+  // decimals (one decimal place)
+  function genDecAdd() {
+    const a = rnd(1, 99) / 10, b = rnd(1, 99) / 10;
+    return { a, b, op: '+', answer: norm(a + b), decimal: true };
+  }
+  function genDecSub() {
+    const a = rnd(11, 99) / 10, b = rnd(1, Math.round(a * 10) - 1) / 10;
+    return { a, b, op: '−', answer: norm(a - b), decimal: true };
+  }
+
+  function makeChoices(q) {
+    const { a, b, op, answer, decimal } = q;
+    const step = decimal ? 0.1 : 1;
+    const cands = [];
+    if (op === '×') {
+      // Common multiplication slips: off by one factor, added instead, neighbouring table
+      cands.push(answer + a, answer - a, answer + b, answer - b, a + b,
+                 a * (b + 1), a * Math.max(1, b - 1), (a + 1) * b, Math.max(1, a - 1) * b);
+    } else if (op === '÷') {
+      cands.push(answer + 1, answer - 1, answer + 2, answer - 2, b, a - b, answer * 2, Math.floor(answer / 2));
     } else {
-      // Hard: ×1 through ×12 — scales with level
-      const maxMultiplier = Math.min(12, 6 + Math.floor(level / 2));
-      a = Math.floor(Math.random() * maxMultiplier) + 1;
-      b = Math.floor(Math.random() * 12) + 1;
-      if (Math.random() < 0.5) [a, b] = [b, a];
+      const spread = decimal ? 10 : (answer > 20 ? 8 : 3);
+      for (let i = -spread; i <= spread; i++) if (i !== 0) cands.push(answer + i * step);
+      if (decimal) cands.push(answer + 1, answer - 1);                 // off by a whole
+      if (!decimal && answer > 20) cands.push(answer + 10, answer - 10); // carried/borrowed wrong
     }
-    correctAnswer = a * b;
-    num1El.textContent = a;
-    num2El.textContent = b;
-
-    // Generate plausible wrong-answer choices
-    const choices = new Set([correctAnswer]);
-    // Common multiplication mistakes: off by one factor, off by ten, addition instead of mult, etc.
-    const distractors = [
-      correctAnswer + a,       // off by one "a"
-      correctAnswer - a,       // off by one "a"
-      correctAnswer + b,       // off by one "b"
-      correctAnswer - b,
-      a + b,                   // confused with addition
-      a * (b + 1),
-      a * Math.max(1, b - 1),
-      (a + 1) * b,
-      Math.max(1, a - 1) * b,
-    ];
-    // Shuffle distractors and pick valid ones
-    distractors.sort(() => Math.random() - 0.5);
-    for (const d of distractors) {
+    cands.sort(() => Math.random() - 0.5);
+    const choices = new Set([answer]);
+    for (const c of cands) {
       if (choices.size >= 4) break;
-      if (d > 0 && d !== correctAnswer) choices.add(d);
+      const v = norm(c);
+      if (v >= 0 && v !== answer) choices.add(v);
     }
-    // Fill any remaining slots with near-random values
     while (choices.size < 4) {
-      const candidate = correctAnswer + Math.floor(Math.random() * 10) - 5;
-      if (candidate > 0 && candidate !== correctAnswer) choices.add(candidate);
+      const v = norm(answer + (rnd(-6, 6) || 1) * step);
+      if (v >= 0 && v !== answer) choices.add(v);
     }
+    return [...choices].sort(() => Math.random() - 0.5);
+  }
 
-    const shuffled = [...choices].sort(() => Math.random() - 0.5);
+  function generateQuestion() {
+    const gens = STAGES[stage].gens;
+    const q = gens[Math.floor(Math.random() * gens.length)]();
+    correctAnswer = norm(q.answer);
+    num1El.textContent = fmt(q.a, q.decimal);
+    num2El.textContent = fmt(q.b, q.decimal);
+    opEl.textContent = q.op;
+
     answersGrid.innerHTML = '';
-    shuffled.forEach(val => {
+    makeChoices(q).forEach(val => {
       const btn = document.createElement('button');
       btn.className = 'answer-btn';
-      btn.textContent = val;
+      btn.textContent = fmt(val, q.decimal);
+      btn.dataset.val = val;
       btn.onclick = () => handleAnswer(val, btn);
       answersGrid.appendChild(btn);
     });
@@ -895,10 +900,10 @@
       }, 900);
 
       setTimeout(() => {
-        level++;
-        levelNumEl.textContent = Math.min(level, TOTAL_LEVELS);
-        progressFill.style.width = Math.min(100, ((level - 1) / TOTAL_LEVELS * 100)) + '%';
-        if (level > TOTAL_LEVELS) endGame();
+        round++;
+        levelNumEl.textContent = Math.min(round, TOTAL_LEVELS);
+        progressFill.style.width = Math.min(100, ((round - 1) / TOTAL_LEVELS * 100)) + '%';
+        if (round > TOTAL_LEVELS) endGame();
         else showQuestion();
       }, 1300);
 
@@ -912,7 +917,7 @@
       // Only reveal the correct answer after the SECOND wrong attempt
       if (wrongAttempts >= 2) {
         [...answersGrid.children].forEach(b => {
-          if (parseInt(b.textContent) === correctAnswer) b.classList.add('correct');
+          if (norm(Number(b.dataset.val)) === correctAnswer) b.classList.add('correct');
         });
       }
 
@@ -1004,18 +1009,16 @@
     }, 2200);
   }
 
-  function startGame(diff) {
-    difficulty = diff;
-    score = 0; level = 1;
+  function startGame(lvl) {
+    stage = lvl;
+    score = 0; round = 1;
     currentGap = INITIAL_GAP;
     timeLeft = TIME_LIMIT;
     scoreEl.textContent = 0;
     levelNumEl.textContent = 1;
     progressFill.style.width = '0%';
 
-    if (diff === 'hard') hint.textContent = '🐙 Big tables! Octopus is fast — solve quick!';
-    else if (diff === 'medium') hint.textContent = '🐠 Solve fast — octopus behind you!';
-    else hint.textContent = '🌊 Multiply to swim faster than the octopus!';
+    hint.textContent = STAGES[stage].hint;
 
     difficultyPick.classList.add('hidden');
     treasure.classList.remove('show');
